@@ -6,7 +6,7 @@ import { camelCase } from 'change-case';
 import type { EbirdDataRow } from './core-types';
 
 const csvFilePath = path.resolve('./data/MyEbirdData.csv');
-export const rawData: EbirdDataRow[] = await neatCsv(fs.createReadStream(csvFilePath), {
+const rawData: EbirdDataRow[] = await neatCsv(fs.createReadStream(csvFilePath), {
   mapHeaders: ({ header }) => {
     const camelCased = camelCase(header);
     return ['time',
@@ -36,3 +36,15 @@ export const rawData: EbirdDataRow[] = await neatCsv(fs.createReadStream(csvFile
     }
   }
 });
+
+export function getDateRange(from: Date, to: Date): EbirdDataRow[] {
+  return rawData.filter(row => row.date >= from && row.date <= to);
+}
+
+export function getSpecies(species: string): EbirdDataRow[] {
+  return rawData.filter(row => row.scientificName === species);
+}
+
+export function getYear(year: number): EbirdDataRow[] {
+  return rawData.filter(row => row.date.getFullYear() === year);
+}
