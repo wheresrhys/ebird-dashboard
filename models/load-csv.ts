@@ -48,3 +48,7 @@ export function getSpecies(species: string): EbirdDataRow[] {
 export function getYear(year: number): EbirdDataRow[] {
   return rawData.filter(row => row.date.getFullYear() === year);
 }
+
+export function getAll(): EbirdDataRow[] {
+  return rawData;
+}

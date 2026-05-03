@@ -69,7 +69,10 @@ export function createDb(rawData: EbirdDataRow[]): DB {
 
   return {
     submissions: Object.values(submissionsMap),
-    species: Object.values(speciesMap),
+    species: Object.values(speciesMap).map(species => {
+      species.records = species.records.sort((a, b) => a.submission.date.getTime() - b.submission.date.getTime());
+      return species
+    }),
     locations: Object.values(locationMap)
   }
 }
