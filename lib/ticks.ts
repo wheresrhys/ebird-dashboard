@@ -1,7 +1,7 @@
 import type { DB } from '../models/create-db';
 import type { Species, Location } from '../models/core-types';
 
-type Tick = {
+export type Tick = {
   species: Species;
   date: Date;
   submissionId: string;
