@@ -1,4 +1,4 @@
-import { getTicksList } from '../lib/ticks-list';
+import { getTicksList } from '../lib/ticks';
 import { createDb } from '../models/create-db';
 import { getYear } from '../models/load-csv';
 import { Temporal } from 'temporal-polyfill';

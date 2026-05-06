@@ -37,18 +37,10 @@ const rawData: EbirdDataRow[] = await neatCsv(fs.createReadStream(csvFilePath), 
   }
 });
 
-export function getDateRange(from: Date, to: Date): EbirdDataRow[] {
-  return rawData.filter(row => row.date >= from && row.date <= to);
-}
-
-export function getSpecies(species: string): EbirdDataRow[] {
-  return rawData.filter(row => row.scientificName === species);
-}
-
-export function getYear(year: number): EbirdDataRow[] {
-  return rawData.filter(row => row.date.getFullYear() === year);
-}
-
-export function getAll(): EbirdDataRow[] {
+export function getAllData(): EbirdDataRow[] {
   return rawData;
+}
+
+export function listAvailableYears(): number[] {
+  return Array.from(new Set(rawData.map(row => row.date.getFullYear()))).sort();
 }

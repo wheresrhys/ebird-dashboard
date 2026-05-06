@@ -1,14 +1,26 @@
-import { getTicksList } from '../lib/ticks-list';
+import { getTicks } from '../lib/ticks';
 import { createDb } from '../models/create-db';
-import { getYear, getAll } from '../models/load-csv';
-import { Temporal } from 'temporal-polyfill';
+import { listAvailableYears } from '../models/load-csv';
+import { filterData, getYearFilter } from '../lib/data-filters';
 
+function getTicksWithFilters(filters: EBirdDataFilter[]): Tick[] {
+  const records = filterData(filters);
+  const db = createDb(records);
+  return getTicks(db);
+}
+
+function getTicksByYear(): Record<number, Tick[]> {
+  const listOfYears = listAvailableYears();
+  return Object.fromEntries(listOfYears.map(year => [year,getTicksWithFilters([getYearFilter(year)])]));
+}
 
 export default function Home() {
-  const allTimeDb = createDb(getAll());
-  const allTimeTicks = getTicksList(allTimeDb);
-  const thisYearDb = createDb(getYear(new Date().getFullYear() - 1));
-  const thisYearTicks = getTicksList(thisYearDb);
+  const thisYear = new Date().getFullYear();
+
+  const allTimeTicks = getTicksWithFilters([]);
+  const ticksByYear = getTicksByYear();
+  const thisYearTicks = ticksByYear[thisYear];
+  const recordYearTicks = Math.max(...Object.values(ticksByYear).map(ticks => ticks.length));
 
   return (
     <div>
@@ -23,21 +35,9 @@ export default function Home() {
           </div>
           <div className="stat">
             <div className="stat-desc">UK</div>
-            <div className="stat-value">76,250</div>
-            <div className="stat-title">308</div>
-            <div className="stat-title">150 <span className="text-gray-400">(200)</span></div>
-          </div>
-          <div className="stat">
-            <div className="stat-desc">London</div>
-            <div className="stat-value">76,250</div>
-            <div className="stat-title">308</div>
-            <div className="stat-title">150 <span className="text-gray-400">(200)</span></div>
-          </div>
-          <div className="stat">
-            <div className="stat-desc">Marshes</div>
-            <div className="stat-value">76,250</div>
-            <div className="stat-title">308</div>
-            <div className="stat-title">150 <span className="text-gray-400">(200)</span></div>
+            <div className="stat-value">{allTimeTicks.length}</div>
+            <div className="stat-title">{recordYearTicks}</div>
+            <div className="stat-title">{thisYearTicks.length}{' '}<span className="text-gray-400">(200)</span></div>
           </div>
         </div>
       </div>

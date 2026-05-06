@@ -8,7 +8,7 @@ type Tick = {
   location: Location
 }
 
-export function getTicksList(db: DB): Tick[] {
+export function getTicks(db: DB): Tick[] {
   return db.species.map(species => ({
     species,
     date: species.records[0].submission.date,
