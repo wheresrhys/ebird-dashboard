@@ -67,7 +67,7 @@ function RegionStats({name, filters}: {name: string, filters: EBirdDataFilter[]}
 
 export default function Home() {
   const thisYear = new Date().getFullYear();
-  const allTimeTicks = getTicksWithFilters([]);
+  const allTimeTicks = getTicksWithFilters([]).sort((a, b) => a.species.taxonomicOrder - b.species.taxonomicOrder);
   const thisYearTicks = getTicksWithFilters([getYearFilter(thisYear)]);
   return (
     <div>
@@ -114,7 +114,7 @@ export default function Home() {
         <ol className="list-inside list-decimal">
           {allTimeTicks.map(tick => (
             <li className="mb-2" key={tick.species.taxonomicOrder}>
-                      {tick.species.commonName} - {tick.date.toLocaleDateString()} - {tick.location.location}
+                      {tick.species.commonName} ({tick.species.taxonomicOrder}) - {tick.date.toLocaleDateString()} - {tick.location.location}
                     </li>
                   ))}
         </ol>
