@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import neatCsv from 'neat-csv';
 import { camelCase } from 'change-case';
-
+import { sanitiseData } from '@/lib/sanitise-data';
 import type { EbirdDataRow } from './core-types';
 
 const csvFilePath = path.resolve('./data/MyEbirdData.csv');
@@ -38,7 +38,7 @@ const rawData: EbirdDataRow[] = await neatCsv(fs.createReadStream(csvFilePath), 
 });
 
 export function getAllData(): EbirdDataRow[] {
-  return rawData;
+  return sanitiseData(rawData);
 }
 
 export function listAvailableYears(): number[] {

@@ -66,16 +66,9 @@ function RegionStats({name, filters}: {name: string, filters: EBirdDataFilter[]}
 }
 
 export default function Home() {
-  // const thisYear = new Date().getFullYear();
-  // const allTimeTicks = getTicksWithFilters([]);
-  // const ticksByYear = getTicksByYear();
-  // const thisYearTicks = ticksByYear[thisYear];
-  // const recordYearTicks = Math.max(...Object.values(ticksByYear).map(ticks => ticks.length));
-
-  // const comparatorYears = excludeNonComparableYears(ticksByYear);
-  // const averageTickTally = getAverageTickTally(comparatorYears);
-  // const prediction = getPredictionBasedOnYearlyAverage(thisYearTicks, averageTickTally);
-
+  const thisYear = new Date().getFullYear();
+  const allTimeTicks = getTicksWithFilters([]);
+  const thisYearTicks = getTicksWithFilters([getYearFilter(thisYear)]);
   return (
     <div>
       <h1>ebird dashboard</h1>
@@ -104,11 +97,11 @@ export default function Home() {
 
         </div>
       </div>
-      {/* <div className="flex">
+      <div className="flex">
       <div className="w-half">
         <h2>Year list</h2>
         <ol className="list-inside list-decimal">
-          // TODO: have some concept of how special a bird is
+          {/* // TODO: have some concept of how special a bird is */}
           {thisYearTicks.map(tick => (
             <li className="mb-2" key={tick.species.taxonomicOrder}>
               {tick.species.commonName} - {tick.date.toLocaleDateString()} - {tick.location.location}
@@ -126,7 +119,7 @@ export default function Home() {
                   ))}
         </ol>
       </div>
-      </div> */}
+      </div>
     </div>
   );
 }
