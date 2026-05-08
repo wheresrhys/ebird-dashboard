@@ -5,10 +5,11 @@ export type LocationName = string;
 export type Latitude = number;
 export type Longitude = number;
 export type TaxonomicOrder = number;
+export type ScientificName = string;
 
 export type Species = {
   commonName: string;
-  scientificName: string;
+  scientificName: ScientificName;
   taxonomicOrder: TaxonomicOrder;
   records: BirdRecord[];
 };

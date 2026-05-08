@@ -37,10 +37,12 @@ const rawData: EbirdDataRow[] = await neatCsv(fs.createReadStream(csvFilePath), 
   }
 });
 
+const sanitisedData = sanitiseData(rawData);
+
 export function getAllData(): EbirdDataRow[] {
-  return sanitiseData(rawData);
+  return sanitisedData;
 }
 
 export function listAvailableYears(): number[] {
-  return Array.from(new Set(rawData.map(row => row.date.getFullYear()))).sort();
+  return Array.from(new Set(sanitisedData.map(row => row.date.getFullYear()))).sort();
 }

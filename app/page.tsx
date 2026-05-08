@@ -59,7 +59,7 @@ function RegionStats({name, filters}: {name: string, filters: EBirdDataFilter[]}
     <div className="stat">
       <div className="stat-desc">{name}</div>
       <div className="stat-value">{allTimeTicks.length}</div>
-      <div className="stat-title">{recordYearTicks}</div>
+      <div className="stat-title">{recordYearTicks} <span className="text-gray-400">({Math.round(averageTickTally[364])})</span></div>
       <div className="stat-title">{thisYearTicks.length}{' '}<span className="text-gray-400">({prediction})</span></div>
     </div>
   )
@@ -77,7 +77,7 @@ export default function Home() {
           <div className="stat">
             <div className="stat-desc">Region</div>
             <div className="stat-value">All time</div>
-            <div className="stat-title">Year record</div>
+            <div className="stat-title">Year record <span className="text-gray-400">(avg)</span></div>
             <div className="stat-title">This year <span className="text-gray-400">(predicted)</span></div>
           </div>
           <RegionStats name="UK" filters={[]} />
@@ -114,7 +114,7 @@ export default function Home() {
         <ol className="list-inside list-decimal">
           {allTimeTicks.map(tick => (
             <li className="mb-2" key={tick.species.taxonomicOrder}>
-                      {tick.species.commonName} ({tick.species.taxonomicOrder}) - {tick.date.toLocaleDateString()} - {tick.location.location}
+                      {tick.species.commonName} ({tick.species.scientificName}) - {tick.date.toLocaleDateString()} - {tick.location.location}
                     </li>
                   ))}
         </ol>
