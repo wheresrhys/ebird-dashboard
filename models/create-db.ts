@@ -1,6 +1,6 @@
 
 import type { Submission, BirdRecord, Species, EbirdDataRow, Location, LocationId, SubmissionId } from './core-types';
-
+import { subspeciesKeepers } from '@/lib/sanitise-data';
 export type DB = {
   submissions: Submission[];
   species: Species[];
@@ -17,6 +17,7 @@ export function createDb(rawData: EbirdDataRow[]): DB {
       return existingSpecies;
     }
     speciesMap[ebirdDataRow.scientificName] = {
+      isSubspecies: subspeciesKeepers.includes(ebirdDataRow.scientificName),
       scientificName: ebirdDataRow.scientificName,
       commonName: ebirdDataRow.commonName,
       taxonomicOrder: ebirdDataRow.taxonomicOrder,

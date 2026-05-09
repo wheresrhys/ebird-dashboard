@@ -12,6 +12,7 @@ export type Species = {
   scientificName: ScientificName;
   taxonomicOrder: TaxonomicOrder;
   records: BirdRecord[];
+  isSubspecies: boolean;
 };
 
 export type Location = {

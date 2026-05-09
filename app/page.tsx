@@ -6,15 +6,15 @@ import { Temporal } from 'temporal-polyfill';
 
 const FIRST_PROPER_EBIRD_YEAR = 2020;
 
-function getTicksWithFilters(filters: EBirdDataFilter[]): Tick[] {
+function getTicksWithFilters(filters: EBirdDataFilter[], sortBy: 'taxonomicOrder' | 'date'): Tick[] {
   const records = filterData(filters);
   const db = createDb(records);
-  return getTicks(db);
+  return getTicks(db, sortBy);
 }
 
-function getTicksByYear(filters: EBirdDataFilter[]): Record<number, Tick[]> {
+function getTicksByYear(filters: EBirdDataFilter[], sortBy: 'taxonomicOrder' | 'date'): Record<number, Tick[]> {
   const listOfYears = listAvailableYears();
-  return Object.fromEntries(listOfYears.map(year => [year,getTicksWithFilters([...filters, getYearFilter(year)])]));
+  return Object.fromEntries(listOfYears.map(year => [year, getTicksWithFilters([...filters, getYearFilter(year)], sortBy)]));
 }
 
 function excludeNonComparableYears(ticksByYear: Record<number, Tick[]>): Record<number, Tick[]> {
@@ -48,8 +48,8 @@ function getPredictionBasedOnYearlyAverage(ticks: Tick[], averageTickTally: numb
 
 
 function RegionStats({name, filters}: {name: string, filters: EBirdDataFilter[]}) {
-  const allTimeTicks = getTicksWithFilters(filters);
-  const ticksByYear = getTicksByYear(filters);
+  const allTimeTicks = getTicksWithFilters(filters, 'date');
+  const ticksByYear = getTicksByYear(filters, 'date');
   const thisYearTicks = ticksByYear[new Date().getFullYear()];
   const recordYearTicks = Math.max(...Object.values(ticksByYear).map(ticks => ticks.length));
   const comparatorYears = excludeNonComparableYears(ticksByYear);
@@ -65,10 +65,23 @@ function RegionStats({name, filters}: {name: string, filters: EBirdDataFilter[]}
   )
 }
 
+function TickList({ticks}: {ticks: Tick[]}) {
+  // TODO: have some concept of how special a bird is
+  return (
+    <ol className="list-inside list-decimal">
+      {ticks.map(tick => (
+        <li className={`mb-2 ${tick.species.isSubspecies ? 'text-red-500' : ''}`} key={tick.species.scientificName}>
+          {tick.species.commonName} - {tick.date.toLocaleDateString()} - {tick.location.location}
+        </li>
+      ))}
+    </ol>
+  )
+}
+
 export default function Home() {
   const thisYear = new Date().getFullYear();
-  const allTimeTicks = getTicksWithFilters([]).sort((a, b) => a.species.taxonomicOrder - b.species.taxonomicOrder);
-  const thisYearTicks = getTicksWithFilters([getYearFilter(thisYear)]);
+  const allTimeTicks = getTicksWithFilters([], 'taxonomicOrder')
+  const thisYearTicks = getTicksWithFilters([getYearFilter(thisYear)], 'date');
   return (
     <div>
       <h1>ebird dashboard</h1>
@@ -100,24 +113,11 @@ export default function Home() {
       <div className="flex">
       <div className="w-half">
         <h2>Year list</h2>
-        <ol className="list-inside list-decimal">
-          {/* // TODO: have some concept of how special a bird is */}
-          {thisYearTicks.map(tick => (
-            <li className="mb-2" key={tick.species.taxonomicOrder}>
-              {tick.species.commonName} - {tick.date.toLocaleDateString()} - {tick.location.location}
-            </li>
-          ))}
-        </ol>
+        <TickList ticks={thisYearTicks} />
       </div>
       <div className="w-half">
         <h2>Life list</h2>
-        <ol className="list-inside list-decimal">
-          {allTimeTicks.map(tick => (
-            <li className="mb-2" key={tick.species.taxonomicOrder}>
-                      {tick.species.commonName} ({tick.species.scientificName}) - {tick.date.toLocaleDateString()} - {tick.location.location}
-                    </li>
-                  ))}
-        </ol>
+        <TickList ticks={allTimeTicks} />
       </div>
       </div>
     </div>

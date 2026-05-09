@@ -8,13 +8,19 @@ export type Tick = {
   location: Location
 }
 
-export function getTicks(db: DB): Tick[] {
+const sortValueGetters: Record<string, (tick: Tick) => number> = {
+  taxonomicOrder: (tick: Tick) => tick.species.taxonomicOrder as number,
+  date: (tick: Tick)=>tick.date.getTime()
+}
+
+export function getTicks(db: DB, sortBy: 'taxonomicOrder' | 'date'): Tick[] {
+  const sortValueGetter = sortValueGetters[sortBy];
   return db.species.map(species => ({
     species,
     date: species.records[0].submission.date,
     submissionId: species.records[0].submission.submissionId,
     location: species.records[0].submission.location
-  })).sort((a, b) => a.date.getTime() - b.date.getTime());
+  })).sort((a, b) => sortValueGetter(a) - sortValueGetter(b));
 }
 
 
