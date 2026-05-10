@@ -1,50 +1,12 @@
-import { getTicks, type Tick } from '../lib/ticks';
-import { createDb } from '../models/create-db';
-import { listAvailableYears } from '../models/load-csv';
-import { filterData, getYearFilter, type EBirdDataFilter } from '../lib/data-filters';
-import { Temporal } from 'temporal-polyfill';
+import { getTicksWithFilters, getTicksByYear, type Tick } from '../lib/ticks';
+import { getYearFilter, type EBirdDataFilter } from '../lib/data-filters';
+import { getAverageTickTally, getPredictionBasedOnYearlyAverage } from '../lib/avg-utilities'
+import { getPredictionBasedOnDetail } from '../lib/prediction-detail';
 
-const FIRST_PROPER_EBIRD_YEAR = 2020;
+// Can also plot an average / median amount at this date graph
 
-function getTicksWithFilters(filters: EBirdDataFilter[], sortBy: 'taxonomicOrder' | 'date'): Tick[] {
-  const records = filterData(filters);
-  const db = createDb(records);
-  return getTicks(db, sortBy);
-}
-
-function getTicksByYear(filters: EBirdDataFilter[], sortBy: 'taxonomicOrder' | 'date'): Record<number, Tick[]> {
-  const listOfYears = listAvailableYears();
-  return Object.fromEntries(listOfYears.map(year => [year, getTicksWithFilters([...filters, getYearFilter(year)], sortBy)]));
-}
-
-function excludeNonComparableYears(ticksByYear: Record<number, Tick[]>): Record<number, Tick[]> {
-  const thisYear = new Date().getFullYear();
-  return Object.fromEntries(Object.entries(ticksByYear).filter(([year, ticks]) => Number(year) >= FIRST_PROPER_EBIRD_YEAR && Number(year) <= thisYear));
-}
-
-function buildTickTally(ticks: Tick[]): number[] {
-  const tickTimings = ticks.map(tick =>
-    Temporal.PlainDate.from(tick.date.toISOString().split('T')[0]).dayOfYear)
-  const ticksPerDay = [...Array(365)].map((_, index) =>
-    tickTimings.filter(timing => timing === index + 1).length);
-  let ticksSoFar = 0
-  return ticksPerDay.map(ticks => {
-    ticksSoFar += ticks;
-    return ticksSoFar;
-  })
-}
-
-function getAverageTickTally(ticksByYear: Record<number, Tick[]>): number[] {
-  const talliesMatrix = Object.values(ticksByYear).map(buildTickTally);
-  return talliesMatrix[0].map((_, index) => talliesMatrix.map(tally => tally[index]).reduce((acc, tally) => acc + tally, 0) / talliesMatrix.length)
-}
-
-function getPredictionBasedOnYearlyAverage(ticks: Tick[], averageTickTally: number[]): number {
-  const todayAsDayOfYear = Temporal.PlainDate.from(new Date().toISOString().split('T')[0]).dayOfYear;
-  const averageForThisDate = averageTickTally[todayAsDayOfYear - 1];
-  const averageAtYearEnd = averageTickTally[364]
-  return Math.round(averageAtYearEnd + ticks.length - averageForThisDate);
-}
+// Do best ever days, weeks, monthss
+// For total species and total significant species
 
 
 function RegionStats({name, filters}: {name: string, filters: EBirdDataFilter[]}) {
@@ -52,15 +14,15 @@ function RegionStats({name, filters}: {name: string, filters: EBirdDataFilter[]}
   const ticksByYear = getTicksByYear(filters, 'date');
   const thisYearTicks = ticksByYear[new Date().getFullYear()];
   const recordYearTicks = Math.max(...Object.values(ticksByYear).map(ticks => ticks.length));
-  const comparatorYears = excludeNonComparableYears(ticksByYear);
-  const averageTickTally = getAverageTickTally(comparatorYears);
-  const prediction = getPredictionBasedOnYearlyAverage(thisYearTicks, averageTickTally);
+  const averageTickTally = getAverageTickTally(ticksByYear);
+  const averageBasedPrediction = getPredictionBasedOnYearlyAverage(filters);
+  const detailBasedPrediction = getPredictionBasedOnDetail(filters)
   return (
     <div className="stat">
       <div className="stat-desc">{name}</div>
       <div className="stat-value">{allTimeTicks.length}</div>
       <div className="stat-title">{recordYearTicks} <span className="text-gray-400">({Math.round(averageTickTally[364])})</span></div>
-      <div className="stat-title">{thisYearTicks.length}{' '}<span className="text-gray-400">({prediction})</span></div>
+      <div className="stat-title">{thisYearTicks.length}{' '}<span className="text-gray-400">({averageBasedPrediction} | {detailBasedPrediction})</span></div>
     </div>
   )
 }
