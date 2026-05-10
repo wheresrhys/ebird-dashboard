@@ -1,5 +1,5 @@
 import { createDb, type DB } from '../models/create-db';
-import type { Species, Location } from '../models/core-types';
+import type { Species, Location } from '../../models/data';
 import { filterData, getYearFilter, type EBirdDataFilter } from './data-filters';
 import { listAvailableYears } from '../models/load-csv';
 

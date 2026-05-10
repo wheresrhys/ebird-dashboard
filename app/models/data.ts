@@ -38,4 +38,4 @@ export type BirdRecord = {
   rawData: EbirdDataRow
 };
 
-export type EbirdDataRow = Submission & Species & Location & Omit<BirdRecord, 'submission' | 'species'>;
+export type EbirdDataRow = Submission & Omit<Species, 'isSubspecies'> & Location & Omit<BirdRecord, 'submission' | 'species'>;

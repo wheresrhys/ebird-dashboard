@@ -1,5 +1,5 @@
-import { getTicksWithFilters, getTicksByYear, excludeNonComparableYears, type Tick } from '../lib/ticks';
-import type { ScientificName } from '@/models/core-types';
+import { getTicksWithFilters, getTicksByYear, excludeNonComparableYears, type Tick } from './ticks';
+import type { ScientificName } from '@/app/models/data';
 import { Temporal } from 'temporal-polyfill';
 import { getYearFilter, type EBirdDataFilter } from './data-filters';
 

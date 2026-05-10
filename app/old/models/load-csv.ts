@@ -2,8 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import neatCsv from 'neat-csv';
 import { camelCase } from 'change-case';
-import { sanitiseData } from '@/lib/sanitise-data';
-import type { EbirdDataRow } from './core-types';
+import { sanitiseData } from '@/app/lib/sanitise-data';
+import type { EbirdDataRow } from '../../models/data';
 
 const csvFilePath = path.resolve('./data/MyEbirdData.csv');
 const rawData: EbirdDataRow[] = await neatCsv(fs.createReadStream(csvFilePath), {

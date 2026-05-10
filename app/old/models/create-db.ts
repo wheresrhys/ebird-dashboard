@@ -1,6 +1,6 @@
 
-import type { Submission, BirdRecord, Species, EbirdDataRow, Location, LocationId, SubmissionId, TaxonomicOrder, ScientificName, Longitude, Latitude, LocationName, County } from './core-types';
-import { subspeciesKeepers } from '@/lib/sanitise-data';
+import type { Submission, BirdRecord, Species, EbirdDataRow, Location, LocationId, SubmissionId, TaxonomicOrder, ScientificName, Longitude, Latitude, LocationName, County } from '../../models/data';
+import { subspeciesKeepers } from '@/app/lib/sanitise-data';
 export type DB = {
   submissions: Submission[];
   species: Species[];
