@@ -28,6 +28,7 @@ export function getPredictionBasedOnYearlyAverage(filters: EBirdDataFilter[]): n
   const averageTickTally = getAverageTickTally(comparatorYears);
   const todayAsDayOfYear = Temporal.PlainDate.from(new Date().toISOString().split('T')[0]).dayOfYear;
   const averageForThisDate = averageTickTally[todayAsDayOfYear - 1];
+
   const averageAtYearEnd = averageTickTally[364]
   return Math.round(averageAtYearEnd + thisYearTicks.length - averageForThisDate);
 }

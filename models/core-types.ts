@@ -22,7 +22,6 @@ export type Location = {
   location: LocationName;
   latitude: Latitude;
   longitude: Longitude;
-  submissions: Submission[];
 }
 
 export type Submission = {
@@ -36,6 +35,7 @@ export type BirdRecord = {
   species: Species;
   count: number;
   submission: Submission;
+  rawData: EbirdDataRow
 };
 
 export type EbirdDataRow = Submission & Species & Location & Omit<BirdRecord, 'submission' | 'species'>;

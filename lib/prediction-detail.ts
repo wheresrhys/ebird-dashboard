@@ -25,7 +25,6 @@ export function getPredictionBasedOnDetail(filters: EBirdDataFilter[]) {
       comparableTickTallies[scientificName] = 1;
     }
   })
-  console.log(comparableTickTallies)
   let pastOneOffs = 0
   let expectation = thisYearTicks.length;
   Object.values(comparableTickTallies).forEach(pastTicksCount => {
