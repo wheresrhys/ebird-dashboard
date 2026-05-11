@@ -33,7 +33,7 @@ type AwkwardSpecies = BasicSpecies & {
 }
 
 
-export const subspeciesKeepers: ScientificName[] = [
+export const tickableSubspecies: ScientificName[] = [
   'Anas crecca carolinensis',
   'Columba livia (Feral Pigeon)',
   'Phylloscopus collybita tristis',
@@ -91,7 +91,7 @@ export function sanitiseData(data: EbirdDataRow[]): EbirdDataRow[] {
         awkwardSpeciesMap[row.scientificName] = {
           ...basicSpecies,
           rootSpeciesName: speciesScientificName,
-          isKeeper: subspeciesKeepers.includes(row.scientificName)
+          isKeeper: tickableSubspecies.includes(row.scientificName)
         };
       }
     }
@@ -102,7 +102,7 @@ export function sanitiseData(data: EbirdDataRow[]): EbirdDataRow[] {
     if (speciesDitchers.includes(row.scientificName)) {
       return null;
     }
-    if (awkwardSpeciesMap[row.scientificName] && !subspeciesKeepers.includes(row.scientificName)) {
+    if (awkwardSpeciesMap[row.scientificName] && !tickableSubspecies.includes(row.scientificName)) {
       const rootSpeciesName = awkwardSpeciesMap[row.scientificName].rootSpeciesName;
       if (rootSpeciesName) {
         return overrideCommonName({

@@ -1,7 +1,7 @@
 import { getTicksByYear, excludeNonComparableYears, type Tick } from './ticks';
 
 import { Temporal } from 'temporal-polyfill';
-import { type EBirdDataFilter } from './data-filters';
+import { type EbirdDataFilter } from '../../lib/data-filters';
 
 export function buildTickTally(ticks: Tick[]): number[] {
   const tickTimings = ticks.map(tick =>
@@ -21,7 +21,7 @@ export function getAverageTickTally(ticksByYear: Record<number, Tick[]>): number
   return talliesMatrix[0].map((_, index) => talliesMatrix.map(tally => tally[index]).reduce((acc, tally) => acc + tally, 0) / talliesMatrix.length)
 }
 
-export function getPredictionBasedOnYearlyAverage(filters: EBirdDataFilter[]): number {
+export function getPredictionBasedOnYearlyAverage(filters: EbirdDataFilter[]): number {
   const ticksByYear = getTicksByYear(filters, 'date');
   const thisYearTicks = ticksByYear[new Date().getFullYear()];
   const comparatorYears = excludeNonComparableYears(ticksByYear);

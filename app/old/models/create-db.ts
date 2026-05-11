@@ -1,6 +1,6 @@
 
 import type { Submission, BirdRecord, Species, EbirdDataRow, Location, LocationId, SubmissionId, TaxonomicOrder, ScientificName, Longitude, Latitude, LocationName, County } from '../../models/data';
-import { subspeciesKeepers } from '@/app/lib/sanitise-data';
+import { tickableSubspecies } from '@/app/lib/sanitise-data';
 export type DB = {
   submissions: Submission[];
   species: Species[];
@@ -43,7 +43,7 @@ function createSpecies(initialiser: SpeciesInitialiser, records: BirdRecord[]): 
     get records() {
       return getFilteredSortedRecords(records, record => record.species.scientificName === initialiser.scientificName)
     },
-    isSubspecies: initialiser.isSubspecies ?? subspeciesKeepers.includes(initialiser.scientificName)
+    isSubspecies: initialiser.isSubspecies ?? tickableSubspecies.includes(initialiser.scientificName)
   };
 }
 

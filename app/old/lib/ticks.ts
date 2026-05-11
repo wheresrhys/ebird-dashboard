@@ -1,6 +1,6 @@
 import { createDb, type DB } from '../models/create-db';
 import type { Species, Location } from '../../models/data';
-import { filterData, getYearFilter, type EBirdDataFilter } from './data-filters';
+import { filterData, getYearFilter, type EBirdDataFilter } from '../../lib/data-filters';
 import { listAvailableYears } from '../models/load-csv';
 
 const FIRST_PROPER_EBIRD_YEAR = 2020;

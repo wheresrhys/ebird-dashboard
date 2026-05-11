@@ -11,7 +11,7 @@ export type Species = {
   commonName: string;
   scientificName: ScientificName;
   taxonomicOrder: TaxonomicOrder;
-  records: BirdRecord[];
+  records: EbirdDataRow[];
   isSubspecies: boolean;
 };
 

@@ -1,5 +1,5 @@
 import { getTicksWithFilters, getTicksByYear, type Tick } from './lib/ticks';
-import { getYearFilter, type EBirdDataFilter } from './lib/data-filters';
+import { getYearFilter, type EBirdDataFilter } from '../lib/data-filters';
 import { getAverageTickTally, getPredictionBasedOnYearlyAverage } from './lib/avg-utilities'
 import { getPredictionBasedOnDetail } from './lib/prediction-detail';
 
@@ -27,18 +27,7 @@ function RegionStats({name, filters}: {name: string, filters: EBirdDataFilter[]}
   )
 }
 
-function TickList({ticks}: {ticks: Tick[]}) {
-  // TODO: have some concept of how special a bird is
-  return (
-    <ol className="list-inside list-decimal">
-      {ticks.map(tick => (
-        <li className={`mb-2 ${tick.species.isSubspecies ? 'text-red-500' : ''}`} key={tick.species.scientificName}>
-          {tick.species.commonName} - {tick.date.toLocaleDateString()} - {tick.location.location}
-        </li>
-      ))}
-    </ol>
-  )
-}
+
 
 export default function Home() {
   const thisYear = new Date().getFullYear();

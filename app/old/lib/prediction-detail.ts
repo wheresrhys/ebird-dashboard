@@ -1,10 +1,10 @@
 import { getTicksWithFilters, getTicksByYear, excludeNonComparableYears, type Tick } from './ticks';
 import type { ScientificName } from '@/app/models/data';
 import { Temporal } from 'temporal-polyfill';
-import { getYearFilter, type EBirdDataFilter } from './data-filters';
+import { getYearFilter, type EbirdDataFilter } from '../../lib/data-filters';
 
 
-export function getPredictionBasedOnDetail(filters: EBirdDataFilter[]) {
+export function getPredictionBasedOnDetail(filters: EbirdDataFilter[]) {
   const thisYearTicks = getTicksWithFilters([...filters, getYearFilter(new Date().getFullYear())], 'date');
   const thisYearScientificNames = thisYearTicks.map(tick => tick.species.scientificName)
   const todayAsDayOfYear = Temporal.PlainDate.from(new Date().toISOString().split('T')[0]).dayOfYear;
