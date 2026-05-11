@@ -1,5 +1,5 @@
 import { EbirdDataRow, Species } from "../models/data";
-import { filterData, type EbirdDataFilter } from './data-filters'
+import { filterData, getYearFilter, type EbirdDataFilter } from './data-filters'
 import { tickableSubspecies } from '@/app/lib/sanitise-data';
 import { getTicks, type Tick, TickSortType } from './ticks';
 
@@ -29,13 +29,22 @@ function getSpecies(rawData: EbirdDataRow[]): Species[] {
   return species;
 }
 
+export function listAvailableYears(data: EbirdDataRow[]): number[] {
+  return Array.from(new Set(data.map(row => row.date.getFullYear()))).sort();
+}
 
-class FilteredDataWrapper {
+
+export class FilteredDataWrapper {
   #data: EbirdDataRow[]
   #species?: Species[]
+  #availableYears?: number[]
+  #dataByYear?: Record<number, FilteredDataWrapper>
 
-  constructor(sourceData: EbirdDataRow[], filters: EbirdDataFilter[] = [] ) {
+  constructor(sourceData: EbirdDataRow[], filters: EbirdDataFilter[] = [], availableYears?: number[]) {
     this.#data = filterData(sourceData, filters)
+    if (availableYears) {
+      this.#availableYears = availableYears
+    }
   }
   get species () {
     if (!this.#species) {
@@ -44,12 +53,31 @@ class FilteredDataWrapper {
     return this.#species
   }
 
+  get availableYears() {
+    if (!this.#availableYears) {
+      this.#availableYears = listAvailableYears(this.#data)
+    }
+    return this.#availableYears
+  }
+
+  get dataByYear() {
+    if (!this.#dataByYear) {
+      this.#dataByYear = Object.fromEntries(this.availableYears.map(year => [year, this.calve([getYearFilter(year)])]))
+    }
+    return this.#dataByYear;
+
+  }
+
   getTicks(orderedBy: TickSortType, direction: 'asc' | 'desc' = 'asc'): Tick[] {
     return getTicks(this.species, orderedBy, direction === 'desc')
   }
 
+  getTicksByYear(orderedBy: TickSortType, direction: 'asc' | 'desc' = 'asc'): Record<number, Tick[]> {
+    return Object.fromEntries(Object.entries(this.dataByYear).map(([year, yearData]) => [year, yearData.getTicks(orderedBy, direction)]));
+  }
+
   calve(filters: EbirdDataFilter[]) {
-    return new FilteredDataWrapper(this.#data, filters);
+    return new FilteredDataWrapper(this.#data, filters, this.availableYears);
   }
 }
 
