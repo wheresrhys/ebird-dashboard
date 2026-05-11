@@ -26,16 +26,14 @@ function RegionStats({ name, filters, data }: { name: string, filters: EbirdData
   const ticksByYear = filteredData.getTicksByYear('firstSeen');
   const thisYearTicks = ticksByYear[new Date().getFullYear()];
   const recordYearTicks = Math.max(...Object.values(ticksByYear).map(ticks => ticks.length));
-  // const averageTickTally = getAverageTickTally(ticksByYear);
+  const averageTickTally = filteredData.getAverageTickTally('firstSeen');
   // const averageBasedPrediction = getPredictionBasedOnYearlyAverage(filters);
   // const detailBasedPrediction = getPredictionBasedOnDetail(filters)
   return (
     <div className="stat">
       <div className="stat-desc">{name}</div>
       <div className="stat-value">{allTimeTicks.length}</div>
-      <div className="stat-title">{recordYearTicks}
-        {/* <span className="text-gray-400">({Math.round(averageTickTally[364])})</span> */}
-        </div>
+      <div className="stat-title">{recordYearTicks} <span className="text-gray-400">({Math.round(averageTickTally[364])})</span></div>
       <div className="stat-title">{thisYearTicks.length}
         {/* <span className="text-gray-400">({averageBasedPrediction} | {detailBasedPrediction})</span> */}
         </div>

@@ -1,8 +1,9 @@
 import { EbirdDataRow, Species } from "../models/data";
+import { Temporal } from 'temporal-polyfill';
 
 export type Tick = {
   species: Species;
-  salientRecord?: EbirdDataRow
+  salientRecord: EbirdDataRow
 }
 
 export type TickSortType = 'taxonomicOrder' | 'firstSeen' | 'lastSeen';
@@ -31,3 +32,22 @@ export function getTicks(species: Species[], orderedBy:TickSortType, reversed: b
 
     return reversed ? ticks.reverse() : ticks;
 }
+
+export function buildTickTally(ticks: Tick[]): number[] {
+  const tickTimings = ticks.map(tick =>
+    Temporal.PlainDate.from(tick.salientRecord.date.toISOString().split('T')[0]).dayOfYear)
+  const ticksPerDay = [...Array(365)].map((_, index) =>
+    tickTimings.filter(timing => timing === index + 1).length);
+  let ticksSoFar = 0
+  return ticksPerDay.map(ticks => {
+    ticksSoFar += ticks;
+    return ticksSoFar;
+  })
+}
+
+
+
+
+
+
+

@@ -1,7 +1,14 @@
 import { EbirdDataRow, Species } from "../models/data";
 import { filterData, getYearFilter, type EbirdDataFilter } from './data-filters'
 import { tickableSubspecies } from '@/app/lib/sanitise-data';
-import { getTicks, type Tick, TickSortType } from './ticks';
+import { getTicks, buildTickTally, type Tick, TickSortType } from './ticks';
+
+const FIRST_PROPER_EBIRD_YEAR = 2020;
+
+export function excludeNonComparableYears<T>(dataByYear: Record<number, T>): Record<number, T> {
+  const thisYear = new Date().getFullYear();
+  return Object.fromEntries(Object.entries(dataByYear).filter(([year]) => Number(year) >= FIRST_PROPER_EBIRD_YEAR && Number(year) <= thisYear));
+}
 
 function getSpecies(rawData: EbirdDataRow[]): Species[] {
 
@@ -72,9 +79,22 @@ export class FilteredDataWrapper {
     return getTicks(this.species, orderedBy, direction === 'desc')
   }
 
+  // TODO all this by year thing should be in a wrapper class, or maybe an extension??
+  // where the ordering is assumed and memoised
   getTicksByYear(orderedBy: TickSortType, direction: 'asc' | 'desc' = 'asc'): Record<number, Tick[]> {
     return Object.fromEntries(Object.entries(this.dataByYear).map(([year, yearData]) => [year, yearData.getTicks(orderedBy, direction)]));
   }
+
+  getTicksFromComparableYears(orderedBy: TickSortType, direction: 'asc' | 'desc' = 'asc'): Record<number, Tick[]> {
+    return excludeNonComparableYears<Tick[]>(this.getTicksByYear(orderedBy, direction))
+  }
+
+  getAverageTickTally(orderedBy: TickSortType, direction: 'asc' | 'desc' = 'asc'): number[] {
+    const comparatorYears = excludeNonComparableYears(this.getTicksByYear(orderedBy, direction));
+    const talliesMatrix = Object.values(comparatorYears).map(buildTickTally);
+    return talliesMatrix[0].map((_, index) => talliesMatrix.map(tally => tally[index]).reduce((acc, tally) => acc + tally, 0) / talliesMatrix.length)
+  }
+
 
   calve(filters: EbirdDataFilter[]) {
     return new FilteredDataWrapper(this.#data, filters, this.availableYears);
