@@ -27,7 +27,8 @@ function RegionStats({ name, filters, data }: { name: string, filters: EbirdData
   const thisYearTicks = ticksByYear[new Date().getFullYear()];
   const recordYearTicks = Math.max(...Object.values(ticksByYear).map(tickWrapper => tickWrapper.ticks.length));
   const averageTickTally = ticksWrapper.averageTickTally;
-  // const averageBasedPrediction = getPredictionBasedOnYearlyAverage(filters);
+  const averageBasedPrediction = ticksWrapper.getPredictionforDayOfYear();
+  const detailBasedPrediction = 1;
   // const detailBasedPrediction = getPredictionBasedOnDetail(filters)
   return (
     <div className="stat">
@@ -35,7 +36,7 @@ function RegionStats({ name, filters, data }: { name: string, filters: EbirdData
       <div className="stat-value">{ticksWrapper.ticks.length}</div>
       <div className="stat-title">{recordYearTicks} <span className="text-gray-400">({Math.round(averageTickTally[364])})</span></div>
       <div className="stat-title">{thisYearTicks.ticks.length}
-        {/* <span className="text-gray-400">({averageBasedPrediction} | {detailBasedPrediction})</span> */}
+        <span className="text-gray-400">({averageBasedPrediction} | {detailBasedPrediction})</span>
         </div>
     </div>
   )

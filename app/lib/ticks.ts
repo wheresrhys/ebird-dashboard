@@ -62,6 +62,7 @@ export class TickWrapper {
   #reverseOrder: boolean
   #ticks?: Tick[]
   #ticksByYear?: Record<number, TickWrapper>
+  #predictions: number[] = []
   constructor(dataWrapper: DataWrapper, orderedBy: TickSortType, direction: 'asc' | 'desc' = 'asc') {
     this.#dataWrapper = dataWrapper;
     this.#orderedBy = orderedBy;
@@ -92,4 +93,15 @@ export class TickWrapper {
     const talliesMatrix = Object.values(comparatorYears).map(buildTickTally);
     return talliesMatrix[0].map((_, index) => talliesMatrix.map(tally => tally[index]).reduce((acc, tally) => acc + tally, 0) / talliesMatrix.length)
   }
+
+  getPredictionforDayOfYear(dayOfYear: number = Temporal.PlainDate.from(new Date().toISOString().split('T')[0]).dayOfYear) {
+    if (!this.#predictions[dayOfYear - 1]) {
+      const thisYearTicks = this.ticksByYear[new Date().getFullYear()];
+      const averageForThisDate = this.averageTickTally[dayOfYear - 1];
+      const averageAtYearEnd = this.averageTickTally[364]
+      this.#predictions[dayOfYear - 1] = Math.round(averageAtYearEnd + thisYearTicks.ticks.length - averageForThisDate);
+    }
+    return this.#predictions[dayOfYear - 1]
+  }
+
 }
