@@ -2,15 +2,15 @@
 import { getAllData } from "./actions/load-csv";
 import type { EbirdDataRow } from "./models/data";
 import {useEffect, useState} from 'react';
-import { wrapData, FilteredDataWrapper } from './lib/data-wrapper';
-import { getYearFilter} from './lib/data-filters';
-import type {Tick} from './lib/ticks';
+import { wrapData, DataWrapper } from './lib/data-wrapper';
+import { getYearFilter, type EbirdDataFilter} from './lib/data-filters';
+import type {TickWrapper} from './lib/ticks';
 
-function TickList({ ticks, itemNumbersDescend}: { ticks: Tick[], itemNumbersDescend: boolean }) {
+function TickList({ ticks, itemNumbersDescend}: { ticks: TickWrapper, itemNumbersDescend: boolean }) {
   // TODO: have some concept of how special a bird is
   return (
     <ol reversed={itemNumbersDescend ?? false} className="list-inside list-decimal">
-      {ticks.map(tick => (
+      {ticks.ticks.map(tick => (
         <li className={`mb-2 ${tick.species.isSubspecies ? 'text-red-500' : ''}`} key={tick.species.scientificName}>
           {tick.species.commonName} - {tick.salientRecord?.date.toLocaleDateString()} - {tick.salientRecord?.location}
         </li>
@@ -20,21 +20,21 @@ function TickList({ ticks, itemNumbersDescend}: { ticks: Tick[], itemNumbersDesc
 }
 
 
-function RegionStats({ name, filters, data }: { name: string, filters: EbirdDataFilter[], data: FilteredDataWrapper }) {
+function RegionStats({ name, filters, data }: { name: string, filters: EbirdDataFilter[], data: DataWrapper }) {
   const filteredData = data.calve(filters);
-  const allTimeTicks = filteredData.getTicks('firstSeen');
-  const ticksByYear = filteredData.getTicksByYear('firstSeen');
+  const ticksWrapper = filteredData.getTicks('firstSeen');
+  const ticksByYear = ticksWrapper.ticksByYear;
   const thisYearTicks = ticksByYear[new Date().getFullYear()];
-  const recordYearTicks = Math.max(...Object.values(ticksByYear).map(ticks => ticks.length));
-  const averageTickTally = filteredData.getAverageTickTally('firstSeen');
+  const recordYearTicks = Math.max(...Object.values(ticksByYear).map(tickWrapper => tickWrapper.ticks.length));
+  const averageTickTally = ticksWrapper.averageTickTally;
   // const averageBasedPrediction = getPredictionBasedOnYearlyAverage(filters);
   // const detailBasedPrediction = getPredictionBasedOnDetail(filters)
   return (
     <div className="stat">
       <div className="stat-desc">{name}</div>
-      <div className="stat-value">{allTimeTicks.length}</div>
+      <div className="stat-value">{ticksWrapper.ticks.length}</div>
       <div className="stat-title">{recordYearTicks} <span className="text-gray-400">({Math.round(averageTickTally[364])})</span></div>
-      <div className="stat-title">{thisYearTicks.length}
+      <div className="stat-title">{thisYearTicks.ticks.length}
         {/* <span className="text-gray-400">({averageBasedPrediction} | {detailBasedPrediction})</span> */}
         </div>
     </div>
@@ -54,7 +54,7 @@ export default function Home() {
   return (
     <div>
       <h1>ebird dashboard</h1>
-      <div className="w-full">
+      {data.length > 0 ? <><div className="w-full">
         <div className="join stats stats-border shadow-none">
           <div className="stat">
             <div className="stat-desc">Region</div>
@@ -88,7 +88,7 @@ export default function Home() {
           <h2>Life list</h2>
           <TickList ticks={allTimeData.getTicks('firstSeen', 'desc')} itemNumbersDescend={true} />
         </div>
-      </div>
+        </div></> : null}
     </div>
   );
 }
