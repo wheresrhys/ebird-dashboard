@@ -70,6 +70,7 @@ export class DataWrapper {
 
   }
 
+  // todo - memoise this
   getTicks(orderedBy: TickSortType, direction: 'asc' | 'desc' = 'asc'): TickWrapper {
     return new TickWrapper(this, orderedBy, direction)
   }

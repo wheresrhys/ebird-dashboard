@@ -1,18 +1,17 @@
-import { EbirdDataRow, Species, ScientificName } from "../models/data";
+import { EbirdDataRow, Species, ScientificName, LocationName } from "../models/data";
 import { type DataWrapper } from './data-wrapper';
 import { Temporal } from 'temporal-polyfill';
 
 const FIRST_PROPER_EBIRD_YEAR = 2020;
 
-export type Tick = {
-  species: Species;
-  salientRecord: EbirdDataRow
+export type Tick = Omit<Species, 'records'> & {
+  salientRecord: EbirdDataRow;
 }
 
 export type TickSortType = 'taxonomicOrder' | 'firstSeen' | 'lastSeen';
 
 const tickSortValueGetters: Record<TickSortType, (tick: Tick) => number> = {
-  taxonomicOrder: (tick: Tick) => tick.species.taxonomicOrder as number,
+  taxonomicOrder: (tick: Tick) => tick.taxonomicOrder as number,
   firstSeen: (tick: Tick) => tick.salientRecord?.date.getTime() as number,
   lastSeen: (tick: Tick) => -(tick.salientRecord?.date.getTime() as number),
 }
@@ -60,7 +59,10 @@ export class TickWrapper {
   get ticks(): Tick[] {
     if (!this.#ticks) {
         this.#ticks = this.#dataWrapper.species.map(species => {
-          const tick: Tick = { species, salientRecord: species.records[0] }
+          const tick: Tick = {
+            ...species,
+            salientRecord: species.records[0]
+          } as Tick;
           if (this.#orderedBy === 'lastSeen') {
             tick.salientRecord = species.records[species.records.length - 1];
           }
@@ -87,7 +89,7 @@ export class TickWrapper {
     return talliesMatrix[0].map((_, index) => talliesMatrix.map(tally => tally[index]).reduce((acc, tally) => acc + tally, 0) / talliesMatrix.length)
   }
 
-  getPredictionforDayOfYear(dayOfYear: number = getToday()) {
+  getPredictionBasedOnAverage(dayOfYear: number = getToday()) {
     if (!this.#averageBasedPredictions[dayOfYear - 1]) {
       const thisYearTicks = this.ticksByYear[new Date().getFullYear()];
       const averageForThisDate = this.averageTickTally[dayOfYear - 1];
@@ -100,7 +102,7 @@ export class TickWrapper {
   getPredictionBasedOnDetail(dayOfYear: number = getToday()) {
     if (!this.#detailBasedPredictions[dayOfYear - 1]) {
       const thisYearTicks = this.ticksByYear[new Date().getFullYear()];
-      const thisYearScientificNames = thisYearTicks.ticks.map(tick => tick.species.scientificName)
+      const thisYearScientificNames = thisYearTicks.ticks.map(tick => tick.scientificName)
       const futureTicksByYear = this.#dataWrapper.calve([row => {
         const rowDayOfYear = Temporal.PlainDate.from(row.date.toISOString().split('T')[0]).dayOfYear;
         return rowDayOfYear > (dayOfYear - 14) && !thisYearScientificNames.includes(row.scientificName)
@@ -109,7 +111,7 @@ export class TickWrapper {
       const numberOfComparatorYears = Object.keys(futureTicksByYear).length;
       const allComparableTicks = Object.values(futureTicksByYear).flatMap(wrapper => wrapper.ticks)
       const comparableTickTallies: Record<ScientificName, number> = {};
-      allComparableTicks.forEach(({ species: { scientificName } }) => {
+      allComparableTicks.forEach(({  scientificName }) => {
         if (comparableTickTallies[scientificName]) {
           comparableTickTallies[scientificName]++;
         } else {

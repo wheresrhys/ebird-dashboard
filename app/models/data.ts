@@ -7,6 +7,22 @@ export type Longitude = number;
 export type TaxonomicOrder = number;
 export type ScientificName = string;
 
+export type EbirdDataRow = {
+  commonName: string;
+  scientificName: ScientificName;
+  taxonomicOrder: TaxonomicOrder;
+  records: EbirdDataRow[];
+  stateProvince: string;
+  county: County;
+  locationId: LocationId;
+  location: LocationName;
+  latitude: Latitude;
+  longitude: Longitude;
+  submissionId: SubmissionId;
+  date: Date;
+  count: number;
+}
+
 export type Species = {
   commonName: string;
   scientificName: ScientificName;
@@ -14,28 +30,3 @@ export type Species = {
   records: EbirdDataRow[];
   isSubspecies: boolean;
 };
-
-export type Location = {
-  stateProvince: string;
-  county: County;
-  locationId: LocationId;
-  location: LocationName;
-  latitude: Latitude;
-  longitude: Longitude;
-}
-
-export type Submission = {
-  submissionId: SubmissionId;
-  date: Date;
-  location: Location;
-  records: BirdRecord[];
-};
-
-export type BirdRecord = {
-  species: Species;
-  count: number;
-  submission: Submission;
-  rawData: EbirdDataRow
-};
-
-export type EbirdDataRow = Submission & Omit<Species, 'isSubspecies'> & Location & Omit<BirdRecord, 'submission' | 'species'>;

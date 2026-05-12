@@ -11,8 +11,8 @@ function TickList({ ticks, itemNumbersDescend}: { ticks: TickWrapper, itemNumber
   return (
     <ol reversed={itemNumbersDescend ?? false} className="list-inside list-decimal">
       {ticks.ticks.map(tick => (
-        <li className={`mb-2 ${tick.species.isSubspecies ? 'text-red-500' : ''}`} key={tick.species.scientificName}>
-          {tick.species.commonName} - {tick.salientRecord?.date.toLocaleDateString()} - {tick.salientRecord?.location}
+        <li className={`mb-2 ${tick.isSubspecies ? 'text-red-500' : ''}`} key={tick.scientificName}>
+          {tick.commonName} - {tick.salientRecord?.date.toLocaleDateString()} - {tick.salientRecord?.location}
         </li>
       ))}
     </ol>
@@ -27,7 +27,7 @@ function RegionStats({ name, filters, data }: { name: string, filters: EbirdData
   const thisYearTicks = ticksByYear[new Date().getFullYear()];
   const recordYearTicks = Math.max(...Object.values(ticksByYear).map(tickWrapper => tickWrapper.ticks.length));
   const averageTickTally = ticksWrapper.averageTickTally;
-  const averageBasedPrediction = ticksWrapper.getPredictionforDayOfYear();
+  const averageBasedPrediction = ticksWrapper.getPredictionBasedOnAverage();
   const detailBasedPrediction = ticksWrapper.getPredictionBasedOnDetail()
   return (
     <div className="stat">
@@ -49,6 +49,15 @@ export default function Home() {
   const allTimeData = wrapData(data);
   const thisYearData = allTimeData.calve([getYearFilter(thisYear)])
 
+  // const allTimeTicks = allTimeData.getTicks('firstSeen');
+
+  // const predictions = [...Array(365)].map(dayOfYear => {
+  //   return data.length ? {
+  //     detail: allTimeTicks.getPredictionBasedOnDetail(dayOfYear+1),
+  //     average: allTimeTicks.getPredictionBasedOnAverage(dayOfYear+1),
+  //   } : {}
+  // })
+
   return (
     <div>
       <h1>ebird dashboard</h1>
@@ -61,6 +70,11 @@ export default function Home() {
             <div className="stat-title">This year <span className="text-gray-400">(predicted)</span></div>
           </div>
           <RegionStats name="UK" filters={[]} data={allTimeData}/>
+          {/*
+            TODO: Put all these filters in a named map
+            TODO: Then can memoise the filters
+            TODO: Low carbon.
+            */}
           <RegionStats name="London" filters={[row => row.county === 'London']} data={allTimeData}/>
           <RegionStats name="WiderPatch" filters={[row =>
             ['L12106041', 'L1236726', 'L2083779', 'L8046904', 'L11781329', 'L12107169', 'L5850700', 'L1349703', 'L6820003', 'L8933164', 'L15798703', 'L12106406', 'L12106053'].includes(row.locationId)
@@ -86,7 +100,11 @@ export default function Home() {
           <h2>Life list</h2>
           <TickList ticks={allTimeData.getTicks('firstSeen', 'desc')} itemNumbersDescend={true} />
         </div>
-        </div></> : null}
+        </div>
+        {/* <ul>
+          {predictions.map(({detail, average}) => <li>{detail}: {average}</li>)}
+        </ul> */}
+        </> : null}
     </div>
   );
 }
