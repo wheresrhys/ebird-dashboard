@@ -21,6 +21,7 @@ const lowCarbonLocations: LocationId[] = [
 'L46652850'
 ]
 
+// these overrides last updated 12/5/2026
 const lowCarbonSubmissions: SubmissionId[] = [
 'S171491952',
 'S171448048',
