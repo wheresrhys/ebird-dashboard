@@ -25,7 +25,14 @@ function RegionStats({ name, id, filters, data }: { name: string, id: string, fi
   const ticksWrapper = filteredData.getTicks('firstSeen');
   const ticksByYear = ticksWrapper.ticksByYear;
   const thisYearTicks = ticksByYear[new Date().getFullYear()];
-  const recordYearTicks = Math.max(...Object.values(ticksByYear).map(tickWrapper => tickWrapper.ticks.length));
+  let recordYear, recordYearTicks = 0;
+  Object.entries(ticksByYear).forEach(([year, tickWrapper]) => {
+    // we go with >= because if it's a tie, then show the most recent
+    if (tickWrapper.ticks.length >= recordYearTicks) {
+      recordYear = year
+      recordYearTicks = tickWrapper.ticks.length;
+    }
+  });
   const averageTickTally = ticksWrapper.averageTickTally;
   const averageBasedPrediction = ticksWrapper.getPredictionBasedOnAverage();
   const detailBasedPrediction = ticksWrapper.getPredictionBasedOnDetail()
@@ -33,7 +40,7 @@ function RegionStats({ name, id, filters, data }: { name: string, id: string, fi
     <div className="stat">
       <div className="stat-desc">{name}</div>
       <div className="stat-value">{ticksWrapper.ticks.length}</div>
-      <div className="stat-title">{recordYearTicks} <span className="text-gray-400">({Math.round(averageTickTally[364])})</span></div>
+      <div className="stat-title">{recordYearTicks} in {recordYear} <span className="text-gray-400">({Math.round(averageTickTally[364])})</span></div>
       <div className="stat-title">{thisYearTicks.ticks.length} <span className="text-gray-400">({averageBasedPrediction} | {detailBasedPrediction})</span></div>
     </div>
   )
