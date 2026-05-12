@@ -4,7 +4,7 @@ import path from 'path';
 import neatCsv from 'neat-csv';
 import { camelCase } from 'change-case';
 import { sanitiseData } from '@/app/lib/sanitise-data';
-import type { EbirdDataRow } from '../models/data';
+import type { EbirdDataRow } from '../models/types';
 
 async function loadCsv () {
 const csvFilePath = path.resolve('./data/MyEbirdData.csv');

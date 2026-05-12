@@ -1,4 +1,4 @@
-import { EbirdDataRow, TaxonomicOrder, Species, ScientificName } from "@/app/models/data";
+import { EbirdDataRow, TaxonomicOrder, Species, ScientificName } from "@/app/models/types";
 /*
 
 

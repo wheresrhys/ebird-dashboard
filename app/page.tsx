@@ -1,11 +1,11 @@
 'use client'
 import { getAllData } from "./actions/load-csv";
-import type { EbirdDataRow } from "./models/data";
+import type { EbirdDataRow } from "./models/types";
 import {useEffect, useState} from 'react';
 import { wrapData, DataWrapper } from './lib/data-wrapper';
 import { getYearFilter, type EbirdDataFilter} from './lib/data-filters';
 import type {TickWrapper} from './lib/ticks';
-
+import { listConfigs } from './models/lists';
 function TickList({ ticks, itemNumbersDescend}: { ticks: TickWrapper, itemNumbersDescend: boolean }) {
   // TODO: have some concept of how special a bird is
   return (
@@ -69,25 +69,12 @@ export default function Home() {
             <div className="stat-title">Year record <span className="text-gray-400">(avg)</span></div>
             <div className="stat-title">This year <span className="text-gray-400">(predicted)</span></div>
           </div>
-          <RegionStats name="UK" filters={[]} data={allTimeData}/>
           {/*
-            TODO: Put all these filters in a named map
             TODO: Then can memoise the filters
             TODO: Low carbon.
             */}
-          <RegionStats name="London" filters={[row => row.county === 'London']} data={allTimeData}/>
-          <RegionStats name="WiderPatch" filters={[row =>
-            ['L12106041', 'L1236726', 'L2083779', 'L8046904', 'L11781329', 'L12107169', 'L5850700', 'L1349703', 'L6820003', 'L8933164', 'L15798703', 'L12106406', 'L12106053'].includes(row.locationId)
-          ]} data={allTimeData}/>
-          <RegionStats name="Wetlands" filters={[row =>
-            ['L2083779'].includes(row.locationId)
-          ]} data={allTimeData}/>
-          <RegionStats name="Marshes" filters={[row =>
-            ['L1236726', 'L12106041'].includes(row.locationId)
-          ]} data={allTimeData}/>
-          <RegionStats name="Lizard" filters={[row =>
-            ['L8046904'].includes(row.locationId)
-          ]} data={allTimeData}/>
+          {listConfigs.map(config => <RegionStats {...config} data={allTimeData} />)}
+
 
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { EbirdDataRow, Species, ScientificName, LocationName } from "../models/data";
+import { EbirdDataRow, Species, ScientificName, LocationName } from "../models/types";
 import { type DataWrapper } from './data-wrapper';
 import { Temporal } from 'temporal-polyfill';
 

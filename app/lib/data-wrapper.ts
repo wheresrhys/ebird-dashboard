@@ -1,4 +1,4 @@
-import { EbirdDataRow, Species } from "../models/data";
+import { EbirdDataRow, Species } from "../models/types";
 import { filterData, getYearFilter, type EbirdDataFilter } from './data-filters'
 import { tickableSubspecies } from '@/app/lib/sanitise-data';
 import { TickWrapper, type TickSortType} from './ticks';

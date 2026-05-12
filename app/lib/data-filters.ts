@@ -1,4 +1,4 @@
-import type { EbirdDataRow } from "../models/data";
+import type { EbirdDataRow } from "../models/types";
 
 export function getYearFilter(year: number): EbirdDataFilter {
   return (row: EbirdDataRow) => row.date.getFullYear() === year;
