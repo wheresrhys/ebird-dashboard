@@ -20,8 +20,8 @@ function TickList({ ticks, itemNumbersDescend}: { ticks: TickWrapper, itemNumber
 }
 
 
-function RegionStats({ name, filters, data }: { name: string, filters: EbirdDataFilter[], data: DataWrapper }) {
-  const filteredData = data.calve(filters);
+function RegionStats({ name, id, filters, data }: { name: string, id: string, filters: EbirdDataFilter[], data: DataWrapper }) {
+  const filteredData = data.calveForList(id);
   const ticksWrapper = filteredData.getTicks('firstSeen');
   const ticksByYear = ticksWrapper.ticksByYear;
   const thisYearTicks = ticksByYear[new Date().getFullYear()];
@@ -73,7 +73,7 @@ export default function Home() {
             TODO: Then can memoise the filters
             TODO: Low carbon.
             */}
-          {listConfigs.map(config => <RegionStats {...config} data={allTimeData} />)}
+          {listConfigs.map(config => <RegionStats key={config.id} {...config} data={allTimeData} />)}
 
 
         </div>

@@ -2,7 +2,7 @@ import { EbirdDataRow, Species } from "../models/types";
 import { filterData, getYearFilter, type EbirdDataFilter } from './data-filters'
 import { tickableSubspecies } from '@/app/lib/sanitise-data';
 import { TickWrapper, type TickSortType} from './ticks';
-
+import { listConfigMap } from '../models/lists';
 
 
 function getSpecies(rawData: EbirdDataRow[]): Species[] {
@@ -41,6 +41,7 @@ export class DataWrapper {
   #species?: Species[]
   #availableYears?: number[]
   #dataByYear?: Record<number, DataWrapper>
+  #dataByList: Record<string, DataWrapper> = {}
 
   constructor(sourceData: EbirdDataRow[], filters: EbirdDataFilter[] = [], availableYears?: number[]) {
     this.#data = filterData(sourceData, filters)
@@ -67,7 +68,6 @@ export class DataWrapper {
       this.#dataByYear = Object.fromEntries(this.availableYears.map(year => [year, this.calve([getYearFilter(year)])]))
     }
     return this.#dataByYear;
-
   }
 
   // todo - memoise this
@@ -77,6 +77,14 @@ export class DataWrapper {
 
   calve(filters: EbirdDataFilter[]) {
     return new DataWrapper(this.#data, filters, this.availableYears);
+  }
+
+  calveForList(listId: string) {
+    if (!this.#dataByList[listId]) {
+      const { filters } = listConfigMap[listId];
+      this.#dataByList[listId] = new DataWrapper(this.#data, filters, this.availableYears);
+    }
+    return this.#dataByList[listId];
   }
 }
 
