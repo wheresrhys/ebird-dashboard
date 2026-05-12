@@ -12,7 +12,7 @@ function TickList({ ticks, itemNumbersDescend}: { ticks: TickWrapper, itemNumber
     <ol reversed={itemNumbersDescend ?? false} className="list-inside list-decimal">
       {ticks.ticks.map(tick => (
         <li className={`mb-2 ${tick.isSubspecies ? 'text-red-500' : ''}`} key={tick.scientificName}>
-          {tick.commonName} - {tick.salientRecord?.date.toLocaleDateString()} - {tick.salientRecord?.location}
+          {tick.commonName} - {tick.salientRecord?.date.toLocaleDateString()} - {tick.salientRecord?.location} {tick.salientRecord.submissionId}
         </li>
       ))}
     </ol>
@@ -20,7 +20,7 @@ function TickList({ ticks, itemNumbersDescend}: { ticks: TickWrapper, itemNumber
 }
 
 
-function RegionStats({ name, id, filters, data }: { name: string, id: string, filters: EbirdDataFilter[], data: DataWrapper }) {
+function RegionStats({ name, id, data, onSelect, isSelected }: { name: string, id: string, filters: EbirdDataFilter[], data: DataWrapper, onSelect: (string) => void, isSelected: boolean }) {
   const filteredData = data.calveForList(id);
   const ticksWrapper = filteredData.getTicks('firstSeen');
   const ticksByYear = ticksWrapper.ticksByYear;
@@ -35,9 +35,10 @@ function RegionStats({ name, id, filters, data }: { name: string, id: string, fi
   });
   const averageTickTally = ticksWrapper.averageTickTally;
   const averageBasedPrediction = ticksWrapper.getPredictionBasedOnAverage();
-  const detailBasedPrediction = ticksWrapper.getPredictionBasedOnDetail()
+  const detailBasedPrediction = ticksWrapper.getPredictionBasedOnDetail();
+
   return (
-    <div className="stat">
+    <div className={`stat ${isSelected ? 'bg-gray-100' : ''} cursor-pointer`} onClick={() => onSelect(id)}>
       <div className="stat-desc">{name}</div>
       <div className="stat-value">{ticksWrapper.ticks.length}</div>
       <div className="stat-title">{recordYearTicks} in {recordYear} <span className="text-gray-400">({Math.round(averageTickTally[364])})</span></div>
@@ -46,15 +47,34 @@ function RegionStats({ name, id, filters, data }: { name: string, id: string, fi
   )
 }
 
+function YearAndLifeList({ allData, listId }: { allData: DataWrapper, listId: string }) {
+  const allTimeData = allData.calveForList(listId)
+  const thisYear = new Date().getFullYear();
+  const thisYearData = allTimeData.calve([getYearFilter(thisYear)])
+  return <div className="flex">
+    <div className="w-half">
+      <h2>Year list</h2>
+      <TickList ticks={thisYearData.getTicks('firstSeen', 'desc')} itemNumbersDescend={true} />
+    </div>
+    <div className="w-half">
+      <h2>Life list</h2>
+      <TickList ticks={allTimeData.getTicks('firstSeen', 'desc')} itemNumbersDescend={true} />
+    </div>
+  </div>
+}
+
 
 export default function Home() {
   const [data, setData]: [EbirdDataRow[], (data: EbirdDataRow[]) => void] = useState<EbirdDataRow[]>([])
+  const [activeList, setActiveList] = useState(listConfigs[0].id)
+  const allTimeData = wrapData(data);
+
   useEffect(() => {
     getAllData().then(result => setData(result as EbirdDataRow[]))
   }, [])
-  const thisYear = new Date().getFullYear();
-  const allTimeData = wrapData(data);
-  const thisYearData = allTimeData.calve([getYearFilter(thisYear)])
+
+
+
 
   // const allTimeTicks = allTimeData.getTicks('firstSeen');
 
@@ -76,28 +96,12 @@ export default function Home() {
             <div className="stat-title">Year record <span className="text-gray-400">(avg)</span></div>
             <div className="stat-title">This year <span className="text-gray-400">(predicted)</span></div>
           </div>
-          {/*
-            TODO: Then can memoise the filters
-            TODO: Low carbon.
-            */}
-          {listConfigs.map(config => <RegionStats key={config.id} {...config} data={allTimeData} />)}
+          {listConfigs.map(config => <RegionStats key={config.id} {...config} data={allTimeData} onSelect={setActiveList} isSelected={config.id === activeList}/>)}
 
 
         </div>
       </div>
-      <div className="flex">
-        <div className="w-half">
-          <h2>Year list</h2>
-          <TickList ticks={thisYearData.getTicks('firstSeen', 'desc')} itemNumbersDescend={true} />
-        </div>
-        <div className="w-half">
-          <h2>Life list</h2>
-          <TickList ticks={allTimeData.getTicks('firstSeen', 'desc')} itemNumbersDescend={true} />
-        </div>
-        </div>
-        {/* <ul>
-          {predictions.map(({detail, average}) => <li>{detail}: {average}</li>)}
-        </ul> */}
+        <YearAndLifeList allData={allTimeData} listId={activeList} />
         </> : null}
     </div>
   );
