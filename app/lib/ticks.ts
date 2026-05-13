@@ -1,4 +1,4 @@
-import { EbirdDataRow, Species, ScientificName, LocationName } from "../models/types";
+import { EbirdDataRow, Species, ScientificName } from "../models/types";
 import { type DataWrapper } from './data-wrapper';
 import { Temporal } from 'temporal-polyfill';
 
@@ -14,6 +14,12 @@ const tickSortValueGetters: Record<TickSortType, (tick: Tick) => number> = {
   taxonomicOrder: (tick: Tick) => tick.taxonomicOrder as number,
   firstSeen: (tick: Tick) => tick.salientRecord?.date.getTime() as number,
   lastSeen: (tick: Tick) => -(tick.salientRecord?.date.getTime() as number),
+}
+
+const rarityClassifications = ['Heart attack', 'Blimey', 'Pretty Special', 'Very nice', 'Nice', 'Humdrum']
+
+function getRarityClassifications(yearCount: number): string[] {
+  return [...Array(yearCount)].map((_, i) => rarityClassifications[Math.floor(rarityClassifications.length * (i / yearCount))])
 }
 
 function getTickSorter(property: TickSortType, isReversed: boolean = false): (a: Tick, b: Tick) => number {
@@ -51,9 +57,11 @@ export class TickWrapper {
   #orderedBy: TickSortType
   #direction: 'asc' | 'desc'
   #ticks?: Tick[]
-  #ticksByYear?: Record<number, TickWrapper>
+  #ticksByYear: Record<number, TickWrapper> = {}
   #averageBasedPredictions: number[] = []
   #detailBasedPredictions: number[] = []
+  #speciesFrequencies?: Record<ScientificName, number>
+  #yearTicksBucketedByRarity: Record<number, Record<number, number>>= {}
   constructor(dataWrapper: DataWrapper, orderedBy: TickSortType, direction: 'asc' | 'desc' = 'asc') {
     this.#dataWrapper = dataWrapper;
     this.#orderedBy = orderedBy;
@@ -76,15 +84,23 @@ export class TickWrapper {
     return this.#ticks
   }
 
-  get ticksByYear(): Record<number, TickWrapper> {
-    if (!this.#ticksByYear) {
-      this.#ticksByYear = Object.fromEntries(Object.entries(this.#dataWrapper.dataByYear).map(([year, yearData]) => [year, yearData.getTicks(this.#orderedBy, this.#direction)]));
+  getTicksForYear(year: number) {
+    if (!this.#ticksByYear[year]) {
+      this.#ticksByYear[year] = this.#dataWrapper.dataByYear[year].getTicks(this.#orderedBy, this.#direction)
     }
-    return this.#ticksByYear
+    return this.#ticksByYear[year]
+  }
+
+  get ticksByYear(): Record<number, TickWrapper> {
+    return Object.fromEntries(this.#dataWrapper.availableYears.map((year) => [year, this.getTicksForYear(year)]));
   }
 
   get ticksFromComparableYears(): Record<number, TickWrapper> {
-    return excludeNonComparableYears<TickWrapper>(this.ticksByYear)
+    return excludeNonComparableYears(this.ticksByYear)
+  }
+
+  get comparableYears(): number[] {
+    return Object.keys(this.ticksFromComparableYears).map(key => parseInt(key, 10))
   }
 
   get averageTickTally(): number[] {
@@ -138,6 +154,38 @@ export class TickWrapper {
     }
     return this.#detailBasedPredictions[dayOfYear - 1]
   }
+
+  get speciesFrequencies () {
+    if (!this.#speciesFrequencies) {
+
+      const speciesFrequencies: Record<ScientificName, number> = {}
+      Object.values(this.ticksFromComparableYears)
+        .flatMap(wrapper => wrapper.ticks)
+        .forEach(({scientificName}) => {
+          speciesFrequencies[scientificName] = speciesFrequencies[scientificName] || 0
+          speciesFrequencies[scientificName]++;
+        });
+      this.#speciesFrequencies = speciesFrequencies
+    }
+    return this.#speciesFrequencies
+  }
+
+  getRarityBuckets(year: number) {
+    if (!this.#yearTicksBucketedByRarity[year]) {
+      const numberOfComparableYears = Object.keys(this.ticksFromComparableYears).length;
+      const rarityClassifications = getRarityClassifications(numberOfComparableYears);
+      const rarityBuckets: Record<number, number> = Object.fromEntries([...Array(numberOfComparableYears)].map((_, i) => [i + 1, 0]));
+      this.getTicksForYear(year).ticks.forEach(({scientificName}) => {
+        rarityBuckets[this.speciesFrequencies[scientificName] ?? 1]++;
+      })
+      this.#yearTicksBucketedByRarity[year] = Object.fromEntries(
+        Object.entries(rarityBuckets)
+          .map(([yearsSeen, speciesCount]: [string, number]) => [rarityClassifications[parseInt(yearsSeen, 10)],speciesCount]))
+    }
+    return this.#yearTicksBucketedByRarity[year];
+  }
+
+
 
 }
 

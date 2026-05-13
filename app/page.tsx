@@ -1,13 +1,21 @@
 'use client'
 
 /*
- - ticks per year (per list)
+- squished bar chart (like a DNA result) showing a vertical line for every tick coloured by rarity
+- doughnut charts should be scaled according to the biggest year, so that the wedges mean the same number of birds in each chart. I want to be able to say 'in this year I saw more or less common birds than year x'
+- Maybe donut isn't the right paradigm, it shoudl be more like a horizontal stacked bar, and clicking a button allows them to be stacked as lines in chronological order - YES!!!
+- ANNNNND the chronoligical order ones could also be plotted with accurate time intervals between ticks. So the cool UI is
+  - shows horizontal stacked bar chart of rarities
+  - click once and it reorders them so that each tick is an individual vertical line
+  - click again and it spreads them out so that each horizontal pixel is a day of the year and we get a sparse set of coloured vertical lines
+  - ALso think of how to visually represent when a tick was an actual lifer at the time!
+- ticks per year (per list)
+
  - quality ticks per year (per list) see https://docs.google.com/spreadsheets/d/1Zn7RP9e3mSVDGg0LZHWVO4q2gp1YxbGVQO1AZrLHUWE/edit?gid=713428706#gid=713428706
- - charts
  - improve ticks by year to generate individually and popoulate an already extant object
  - matrix of lists totals
  - star birds
- - PieChart of commonality of birds - comparison between years
+
  - comparison of years matrix
  - predict which birds I am likely to get and which I am runnig out of time to get
  - Gardens and seymour road lists
@@ -20,7 +28,7 @@ import { wrapData, DataWrapper } from './lib/data-wrapper';
 import { getYearFilter } from './lib/data-filters';
 import type {TickWrapper} from './lib/ticks';
 import { listConfigs } from './models/lists';
-import { YearsChart } from './components/Charts'
+import { YearsRaceChart, YearlyRarityComparisonCharts } from './components/Charts'
 function TickList({ ticks, itemNumbersDescend}: { ticks: TickWrapper, itemNumbersDescend: boolean }) {
   // TODO: have some concept of how special a bird is
   return (
@@ -69,7 +77,8 @@ function RegionDashboard({ allData, listId }: { allData: DataWrapper, listId: st
   const allTimeTicks = allTimeData.getTicks('firstSeen');
 
   return <div>
-    <YearsChart ticks={allTimeTicks} />
+    <YearsRaceChart ticks={allTimeTicks} />
+    <YearlyRarityComparisonCharts ticks={allTimeTicks} />
     <div className="flex">
     <div className="w-half">
       <h2>Year list</h2>

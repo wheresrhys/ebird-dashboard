@@ -2,6 +2,7 @@
 
 import {
   Chart as ChartJS,
+  ArcElement,
   CategoryScale,
   LinearScale,
   PointElement,
@@ -12,10 +13,11 @@ import {
   type ChartData,
   type ChartOptions,
 } from "chart.js";
-import { Line } from "react-chartjs-2";
+import { Line, Doughnut } from "react-chartjs-2";
 import { buildTickTally, type TickWrapper } from "../lib/ticks";
 
 ChartJS.register(
+  ArcElement,
   CategoryScale,
   LinearScale,
   PointElement,
@@ -27,7 +29,7 @@ ChartJS.register(
 
 const DAY_LABELS = [...Array(365)].map((_, i) => String(i + 1));
 
-export function YearsChart({ ticks }: { ticks: TickWrapper }) {
+export function YearsRaceChart({ ticks }: { ticks: TickWrapper }) {
   const thisYear = new Date().getFullYear();
   const thisYearTicks = buildTickTally(ticks.ticksByYear[thisYear], true);
   const otherYearTicks: [string, number[]][] =
@@ -119,6 +121,79 @@ export function YearsChart({ ticks }: { ticks: TickWrapper }) {
   return (
     <div className="h-80 w-full min-h-[240px]">
       <Line data={data} options={options} />
+    </div>
+  );
+}
+export function YearlyRarityComparisonCharts({ ticks }: { ticks: TickWrapper }) {
+  return <div className="flex ">{[...ticks.comparableYears, new Date().getFullYear()].map((year, i) => {
+    return <RarityBucketsChart key={year} rarityBuckets={ticks.getRarityBuckets(year)} year={year} index={i}/>
+
+  })}</div>
+}
+/** 0 → red, 1 → blue (HSL hue 0° → 180°). */
+function rarityBucketColor(t: number): string {
+  // avoids too much bunching around green/cyan, where visual contrast is not strong.
+  if (t > 0.65 && t < 0.9) {
+    t = t + (0.9 - t)/2
+  }
+  const h = 210 * t;//Math.max(0, Math.min(1, t));
+  const l = 45 + (t * 20) //46
+  const s = 75 - (t * 5) //72
+  return `hsl(${h} ${s}% ${l}%)`;
+}
+
+function RarityBucketsChart({
+  rarityBuckets,
+  year,
+  index
+}: {
+  rarityBuckets: Record<string, number>;
+  year: number;
+  index: number;
+}) {
+  const entries = Object.entries(rarityBuckets);
+  const counts = entries.map(([, c]) => c);
+  const total = counts.reduce((a, b) => a + b, 0);
+  const n = entries.length;
+  if (total === 0 || n === 0) {
+    return (
+      <div
+        className="flex h-40 w-40 shrink-0 items-center justify-center rounded-full border border-dashed border-base-300 text-xs text-base-content/50"
+        aria-label={`Rarity ${year}: no ticks`}
+      />
+    );
+  }
+  const backgroundColor = entries.map((_, i) =>
+    rarityBucketColor(n <= 1 ? 0 : i / (n - 1)),
+  );
+  const data: ChartData<"doughnut", number[], string> = {
+    labels: entries.map(([label]) => label),
+    datasets: [
+      {
+        data: counts,
+        backgroundColor,
+        borderWidth: 0,
+      },
+    ],
+  };
+  const options: ChartOptions<"doughnut"> = {
+    responsive: true,
+    maintainAspectRatio: true,
+    cutout: "55%",
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: { enabled: false },
+        title: {
+          display: true,
+          text: year,
+        },
+    },
+  };
+  return (
+    <div className="h-40 w-40 shrink-0">
+      <Doughnut data={data} options={options} />
     </div>
   );
 }

@@ -40,7 +40,7 @@ export class DataWrapper {
   #data: EbirdDataRow[]
   #species?: Species[]
   #availableYears?: number[]
-  #dataByYear?: Record<number, DataWrapper>
+  #dataByYear: Record<number, DataWrapper> = {}
   #dataByList: Record<string, DataWrapper> = {}
 
   constructor(sourceData: EbirdDataRow[], filters: EbirdDataFilter[] = [], availableYears?: number[]) {
@@ -63,11 +63,15 @@ export class DataWrapper {
     return this.#availableYears
   }
 
-  get dataByYear() {
-    if (!this.#dataByYear) {
-      this.#dataByYear = Object.fromEntries(this.availableYears.map(year => [year, this.calve([getYearFilter(year)])]))
+  getDataForYear(year: number) {
+    if (!this.#dataByYear[year]) {
+      this.#dataByYear[year] = this.calve([getYearFilter(year)])
     }
-    return this.#dataByYear;
+    return this.#dataByYear[year];
+  }
+
+  get dataByYear() {
+    return Object.fromEntries(this.availableYears.map(year => [year, this.getDataForYear(year)]))
   }
 
   // todo - memoise this
