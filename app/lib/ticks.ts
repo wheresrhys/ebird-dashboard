@@ -2,7 +2,7 @@ import { EbirdDataRow, Species, ScientificName, LocationName } from "../models/t
 import { type DataWrapper } from './data-wrapper';
 import { Temporal } from 'temporal-polyfill';
 
-const FIRST_PROPER_EBIRD_YEAR = 2020;
+const FIRST_PROPER_EBIRD_YEAR = 2021;
 
 export type Tick = Omit<Species, 'records'> & {
   salientRecord: EbirdDataRow;
@@ -27,13 +27,17 @@ function getToday () {
 
 export function excludeNonComparableYears<T>(dataByYear: Record<number, T>): Record<number, T> {
   const thisYear = new Date().getFullYear();
-  return Object.fromEntries(Object.entries(dataByYear).filter(([year]) => Number(year) >= FIRST_PROPER_EBIRD_YEAR && Number(year) <= thisYear));
+  return Object.fromEntries(Object.entries(dataByYear).filter(([year]) => Number(year) >= FIRST_PROPER_EBIRD_YEAR && Number(year) < thisYear));
 }
 
-export function buildTickTally(tickWrapper: TickWrapper): number[] {
+export function buildTickTally(tickWrapper: TickWrapper, terminateToday: boolean = false): number[] {
   const tickTimings = tickWrapper.ticks.map(tick =>
     Temporal.PlainDate.from(tick.salientRecord.date.toISOString().split('T')[0]).dayOfYear)
-  const ticksPerDay = [...Array(365)].map((_, index) =>
+  let lastDate = 365;
+  if (terminateToday) {
+    lastDate = Temporal.PlainDate.from(new Date().toISOString().split('T')[0]).dayOfYear
+  }
+  const ticksPerDay = [...Array(lastDate)].map((_, index) =>
     tickTimings.filter(timing => timing === index + 1).length);
   let ticksSoFar = 0
   return ticksPerDay.map(ticks => {
@@ -85,7 +89,7 @@ export class TickWrapper {
 
   get averageTickTally(): number[] {
     const comparatorYears = this.ticksFromComparableYears;
-    const talliesMatrix = Object.values(comparatorYears).map(buildTickTally);
+    const talliesMatrix = Object.values(comparatorYears).map(ticks => buildTickTally(ticks));
     return talliesMatrix[0].map((_, index) => talliesMatrix.map(tally => tally[index]).reduce((acc, tally) => acc + tally, 0) / talliesMatrix.length)
   }
 

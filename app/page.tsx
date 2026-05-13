@@ -1,11 +1,26 @@
 'use client'
+
+/*
+ - ticks per year (per list)
+ - quality ticks per year (per list) see https://docs.google.com/spreadsheets/d/1Zn7RP9e3mSVDGg0LZHWVO4q2gp1YxbGVQO1AZrLHUWE/edit?gid=713428706#gid=713428706
+ - charts
+ - improve ticks by year to generate individually and popoulate an already extant object
+ - matrix of lists totals
+ - star birds
+ - PieChart of commonality of birds - comparison between years
+ - comparison of years matrix
+ - predict which birds I am likely to get and which I am runnig out of time to get
+ - Gardens and seymour road lists
+ - search for/click on a species and get EVERYTHING on it
+*/
 import { getAllData } from "./actions/load-csv";
 import type { EbirdDataRow } from "./models/types";
 import {useEffect, useState} from 'react';
 import { wrapData, DataWrapper } from './lib/data-wrapper';
-import { getYearFilter, type EbirdDataFilter} from './lib/data-filters';
+import { getYearFilter } from './lib/data-filters';
 import type {TickWrapper} from './lib/ticks';
 import { listConfigs } from './models/lists';
+import { YearsChart } from './components/Charts'
 function TickList({ ticks, itemNumbersDescend}: { ticks: TickWrapper, itemNumbersDescend: boolean }) {
   // TODO: have some concept of how special a bird is
   return (
@@ -20,7 +35,7 @@ function TickList({ ticks, itemNumbersDescend}: { ticks: TickWrapper, itemNumber
 }
 
 
-function RegionStats({ name, id, data, onSelect, isSelected }: { name: string, id: string, filters: EbirdDataFilter[], data: DataWrapper, onSelect: (string) => void, isSelected: boolean }) {
+function RegionStats({ name, id, data, onSelect, isSelected }: { name: string, id: string, data: DataWrapper, onSelect: (id: string) => void, isSelected: boolean }) {
   const filteredData = data.calveForList(id);
   const ticksWrapper = filteredData.getTicks('firstSeen');
   const ticksByYear = ticksWrapper.ticksByYear;
@@ -47,11 +62,15 @@ function RegionStats({ name, id, data, onSelect, isSelected }: { name: string, i
   )
 }
 
-function YearAndLifeList({ allData, listId }: { allData: DataWrapper, listId: string }) {
+function RegionDashboard({ allData, listId }: { allData: DataWrapper, listId: string }) {
   const allTimeData = allData.calveForList(listId)
   const thisYear = new Date().getFullYear();
   const thisYearData = allTimeData.calve([getYearFilter(thisYear)])
-  return <div className="flex">
+  const allTimeTicks = allTimeData.getTicks('firstSeen');
+
+  return <div>
+    <YearsChart ticks={allTimeTicks} />
+    <div className="flex">
     <div className="w-half">
       <h2>Year list</h2>
       <TickList ticks={thisYearData.getTicks('firstSeen', 'desc')} itemNumbersDescend={true} />
@@ -60,7 +79,7 @@ function YearAndLifeList({ allData, listId }: { allData: DataWrapper, listId: st
       <h2>Life list</h2>
       <TickList ticks={allTimeData.getTicks('firstSeen', 'desc')} itemNumbersDescend={true} />
     </div>
-  </div>
+  </div></div>
 }
 
 
@@ -101,7 +120,9 @@ export default function Home() {
 
         </div>
       </div>
-        <YearAndLifeList allData={allTimeData} listId={activeList} />
+
+
+        <RegionDashboard allData={allTimeData} listId={activeList} />
         </> : null}
     </div>
   );
