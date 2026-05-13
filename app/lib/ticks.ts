@@ -19,7 +19,7 @@ const tickSortValueGetters: Record<TickSortType, (tick: Tick) => number> = {
 const rarityClassifications = ['Heart attack', 'Blimey', 'Pretty Special', 'Very nice', 'Nice', 'Humdrum']
 
 function getRarityClassifications(yearCount: number): string[] {
-  return [...Array(yearCount)].map((_, i) => rarityClassifications[Math.floor(rarityClassifications.length * (i / yearCount))])
+  return [...Array(yearCount)].map((_, i) => rarityClassifications[Math.floor((rarityClassifications.length +1) * (i / yearCount))])
 }
 
 function getTickSorter(property: TickSortType, isReversed: boolean = false): (a: Tick, b: Tick) => number {
@@ -174,6 +174,7 @@ export class TickWrapper {
     if (!this.#yearTicksBucketedByRarity[year]) {
       const numberOfComparableYears = Object.keys(this.ticksFromComparableYears).length;
       const rarityClassifications = getRarityClassifications(numberOfComparableYears);
+      console.log(rarityClassifications)
       const rarityBuckets: Record<number, number> = Object.fromEntries([...Array(numberOfComparableYears)].map((_, i) => [i + 1, 0]));
       this.getTicksForYear(year).ticks.forEach(({scientificName}) => {
         rarityBuckets[this.speciesFrequencies[scientificName] ?? 1]++;
