@@ -16,10 +16,25 @@ const tickSortValueGetters: Record<TickSortType, (tick: Tick) => number> = {
   lastSeen: (tick: Tick) => -(tick.salientRecord?.date.getTime() as number),
 }
 
-const rarityClassifications = ['Heart attack', 'Blimey', 'Pretty Special', 'Very nice', 'Nice', 'Humdrum']
+const INNER_RARITY_CLASSIFICATIONS = [
+  "Blimey",
+  "Pretty Special",
+  "Very nice",
+  "Nice",
+]
+export const RARITY_CLASSIFICATIONS = [
+  "Heart attack",
+  ...INNER_RARITY_CLASSIFICATIONS,
+  "Humdrum",
+] as const;
+
 
 function getRarityClassifications(yearCount: number): string[] {
-  return [...Array(yearCount)].map((_, i) => rarityClassifications[Math.floor((rarityClassifications.length +1) * (i / yearCount))])
+  return [RARITY_CLASSIFICATIONS[0], ...[...Array(yearCount - 2)].map((_, i) =>
+    INNER_RARITY_CLASSIFICATIONS[
+     Math.floor((INNER_RARITY_CLASSIFICATIONS.length) * (i /( yearCount-2)))
+    ],
+  ), RARITY_CLASSIFICATIONS[RARITY_CLASSIFICATIONS.length - 1]];
 }
 
 function getTickSorter(property: TickSortType, isReversed: boolean = false): (a: Tick, b: Tick) => number {
@@ -181,7 +196,7 @@ export class TickWrapper {
       })
       this.#yearTicksBucketedByRarity[year] = Object.fromEntries(
         Object.entries(rarityBuckets)
-          .map(([yearsSeen, speciesCount]: [string, number]) => [rarityClassifications[parseInt(yearsSeen, 10)],speciesCount]))
+          .map(([yearsSeen, speciesCount]: [string, number]) => [rarityClassifications[parseInt(yearsSeen, 10) - 1],speciesCount]))
     }
     return this.#yearTicksBucketedByRarity[year];
   }

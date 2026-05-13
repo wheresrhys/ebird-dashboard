@@ -14,7 +14,8 @@ import {
   type ChartOptions,
 } from "chart.js";
 import { Line, Doughnut } from "react-chartjs-2";
-import { buildTickTally, type TickWrapper } from "../lib/ticks";
+import { buildTickTally, type TickWrapper, RARITY_CLASSIFICATIONS } from "../lib/ticks";
+type RarityLabel = (typeof RARITY_CLASSIFICATIONS)[number];
 
 ChartJS.register(
   ArcElement,
@@ -126,30 +127,32 @@ export function YearsRaceChart({ ticks }: { ticks: TickWrapper }) {
 }
 export function YearlyRarityComparisonCharts({ ticks }: { ticks: TickWrapper }) {
   return <div className="flex ">{[...ticks.comparableYears, new Date().getFullYear()].map((year, i) => {
-    return <RarityBucketsChart key={year} rarityBuckets={ticks.getRarityBuckets(year)} year={year} index={i}/>
+    return <RarityBucketsChart key={year} rarityBuckets={ticks.getRarityBuckets(year)} year={year}/>
 
   })}</div>
 }
-/** 0 → red, 1 → blue (HSL hue 0° → 180°). */
-function rarityBucketColor(t: number): string {
-  // avoids too much bunching around green/cyan, where visual contrast is not strong.
-  if (t > 0.65 && t < 0.9) {
-    t = t + (0.9 - t)/2
+
+const RARITY_BUCKET_COLORS: Record<RarityLabel, string> = {
+  "Heart attack": "hsl(0 92% 52%)", // bright red
+  Blimey: "hsl(20 92% 54%)", // reddish orange
+  "Pretty Special": "hsl(38 94% 52%)", // amber
+  "Very nice": "hsl(48 96% 56%)", // yellow
+  Nice: "hsl(136 62% 42%)", // green
+  Humdrum: "hsl(217 88% 52%)", // blue
+};
+function rarityBucketColor(label: string): string {
+  if (label in RARITY_BUCKET_COLORS) {
+    return RARITY_BUCKET_COLORS[label as RarityLabel];
   }
-  const h = 210 * t;//Math.max(0, Math.min(1, t));
-  const l = 45 + (t * 20) //46
-  const s = 75 - (t * 5) //72
-  return `hsl(${h} ${s}% ${l}%)`;
+  return "hsl(220 10% 65%)";
 }
 
 function RarityBucketsChart({
   rarityBuckets,
   year,
-  index
 }: {
   rarityBuckets: Record<string, number>;
   year: number;
-  index: number;
 }) {
   const entries = Object.entries(rarityBuckets);
   const counts = entries.map(([, c]) => c);
@@ -163,9 +166,7 @@ function RarityBucketsChart({
       />
     );
   }
-  const backgroundColor = entries.map((_, i) =>
-    rarityBucketColor(n <= 1 ? 0 : i / (n - 1)),
-  );
+  const backgroundColor = entries.map(([label]) => rarityBucketColor(label));
   const data: ChartData<"doughnut", number[], string> = {
     labels: entries.map(([label]) => label),
     datasets: [
@@ -187,7 +188,7 @@ function RarityBucketsChart({
       tooltip: { enabled: false },
         title: {
           display: true,
-          text: year,
+          text: String(year),
         },
     },
   };
