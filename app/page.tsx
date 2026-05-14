@@ -10,6 +10,7 @@
   - click again and it spreads them out so that each horizontal pixel is a day of the year and we get a sparse set of coloured vertical lines
   - ALso think of how to visually represent when a tick was an actual lifer at the time!
 - ticks per year (per list)
+- Put everything in promises and useEffect to mak erendering mroe incremental
 
  - quality ticks per year (per list) see https://docs.google.com/spreadsheets/d/1Zn7RP9e3mSVDGg0LZHWVO4q2gp1YxbGVQO1AZrLHUWE/edit?gid=713428706#gid=713428706
  - improve ticks by year to generate individually and popoulate an already extant object
@@ -17,7 +18,7 @@
  - star birds
 
  - comparison of years matrix
- - predict which birds I am likely to get and which I am runnig out of time to get
+ - predict which birds I am likely to get and which I am running out of time to get
  - Gardens and seymour road lists
  - search for/click on a species and get EVERYTHING on it
 */
@@ -48,14 +49,7 @@ function RegionStats({ name, id, data, onSelect, isSelected }: { name: string, i
   const ticksWrapper = filteredData.getTicks('firstSeen');
   const ticksByYear = ticksWrapper.ticksByYear;
   const thisYearTicks = ticksByYear[new Date().getFullYear()];
-  let recordYear, recordYearTicks = 0;
-  Object.entries(ticksByYear).forEach(([year, tickWrapper]) => {
-    // we go with >= because if it's a tie, then show the most recent
-    if (tickWrapper.ticks.length >= recordYearTicks) {
-      recordYear = year
-      recordYearTicks = tickWrapper.ticks.length;
-    }
-  });
+  const { recordYear, recordYearTicks } = ticksWrapper.recordTicksAndYear;
   const averageTickTally = ticksWrapper.averageTickTally;
   const averageBasedPrediction = ticksWrapper.getPredictionBasedOnAverage();
   const detailBasedPrediction = ticksWrapper.getPredictionBasedOnDetail();

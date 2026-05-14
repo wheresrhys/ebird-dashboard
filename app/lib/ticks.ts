@@ -201,6 +201,18 @@ export class TickWrapper {
     return this.#yearTicksBucketedByRarity[year];
   }
 
+  get recordTicksAndYear () {
+    let recordYear, recordYearTicks = 0;
+    Object.entries(this.ticksByYear).forEach(([year, tickWrapper]) => {
+      // we go with >= because if it's a tie, then show the most recent
+      if (tickWrapper.ticks.length >= recordYearTicks) {
+        recordYear = year
+        recordYearTicks = tickWrapper.ticks.length;
+      }
+    });
+    return { recordYear, recordYearTicks }
+  }
+
 
 
 }

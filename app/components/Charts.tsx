@@ -126,8 +126,10 @@ export function YearsRaceChart({ ticks }: { ticks: TickWrapper }) {
   );
 }
 export function YearlyRarityComparisonCharts({ ticks }: { ticks: TickWrapper }) {
+  const {recordYearTicks} = ticks.recordTicksAndYear;
+
   return <div className="flex ">{[...ticks.comparableYears, new Date().getFullYear()].map((year, i) => {
-    return <RarityBucketsChart key={year} rarityBuckets={ticks.getRarityBuckets(year)} year={year}/>
+    return <RarityBucketsChart key={year} ticks={ticks} year={year} recordYearTicks={recordYearTicks}/>
 
   })}</div>
 }
@@ -148,16 +150,19 @@ function rarityBucketColor(label: string): string {
 }
 
 function RarityBucketsChart({
-  rarityBuckets,
+  ticks,
   year,
+  recordYearTicks
 }: {
-  rarityBuckets: Record<string, number>;
+  ticks: TickWrapper;
   year: number;
+  recordYearTicks: number;
 }) {
-  const entries = Object.entries(rarityBuckets);
-  const counts = entries.map(([, c]) => c);
+  const deficit = recordYearTicks - ticks.getTicksForYear(year).ticks.length;
+  const rarityBuckets = ticks.getRarityBuckets(year)
+  const counts = [...Object.values(rarityBuckets), deficit];
   const total = counts.reduce((a, b) => a + b, 0);
-  const n = entries.length;
+  const n = counts.length;
   if (total === 0 || n === 0) {
     return (
       <div
@@ -166,9 +171,9 @@ function RarityBucketsChart({
       />
     );
   }
-  const backgroundColor = entries.map(([label]) => rarityBucketColor(label));
+  const backgroundColor = [...Object.keys(rarityBuckets).map((label) => rarityBucketColor(label)), "hsl(220 100% 100%)"];
   const data: ChartData<"doughnut", number[], string> = {
-    labels: entries.map(([label]) => label),
+    labels: [...Object.keys(rarityBuckets), ''],
     datasets: [
       {
         data: counts,
