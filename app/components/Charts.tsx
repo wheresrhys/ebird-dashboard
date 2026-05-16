@@ -14,8 +14,8 @@ import {
   type ChartOptions,
 } from "chart.js";
 import { Bar, Line } from "react-chartjs-2";
-import { buildTickTally, type TickWrapper, RARITY_CLASSIFICATIONS } from "../lib/ticks";
-type RarityLabel = (typeof RARITY_CLASSIFICATIONS)[number];
+import { buildTickTally, RARITY_CLASSIFICATIONS, type TickWrapper, RarityLabel  } from "../lib/ticks";
+
 
 ChartJS.register(
   BarElement,
@@ -29,24 +29,6 @@ ChartJS.register(
 );
 
 const DAY_LABELS = [...Array(365)].map((_, i) => String(i + 1));
-
-const RARITY_BUCKET_COLORS: Record<RarityLabel, string> = {
-  "Heart attack": "hsl(0 92% 52%)",
-  Blimey: "hsl(20 92% 54%)",
-  "Pretty Special": "hsl(38 94% 52%)",
-  "Very nice": "hsl(48 96% 56%)",
-  Nice: "hsl(136 62% 42%)",
-  Humdrum: "hsl(217 88% 52%)",
-};
-
-const DEFICIT_COLOR = "hsl(220 12% 92%)";
-
-function rarityBucketColor(label: string): string {
-  if (label in RARITY_BUCKET_COLORS) {
-    return RARITY_BUCKET_COLORS[label as RarityLabel];
-  }
-  return "hsl(220 10% 65%)";
-}
 
 export function YearsRaceChart({ ticks }: { ticks: TickWrapper }) {
   const thisYear = new Date().getFullYear();
@@ -163,20 +145,11 @@ export function YearlyRarityComparisonCharts({ ticks }: { ticks: TickWrapper }) 
       ...rarityLabels.map((label) => ({
         label,
         data: years.map((year) => ticks.getRarityBuckets(year)[label] ?? 0),
-        backgroundColor: rarityBucketColor(label),
+        backgroundColor: RARITY_CLASSIFICATIONS[label as RarityLabel].color,
         borderWidth: 0,
       })),
-      {
-        label: "Below record",
-        data: years.map(
-          (year) => recordYearTicks - ticks.getTicksForYear(year).ticks.length,
-        ),
-        backgroundColor: DEFICIT_COLOR,
-        borderWidth: 0,
-      },
     ],
   };
-
   const options: ChartOptions<"bar"> = {
     indexAxis: "y",
     responsive: true,

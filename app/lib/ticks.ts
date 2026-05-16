@@ -8,6 +8,15 @@ export type Tick = Omit<Species, 'records'> & {
   salientRecord: EbirdDataRow;
 }
 
+export type RarityLabel = string;
+type HSL = string;
+type RarityConfig = {
+  color: HSL
+}
+export type TickWithRarity = Tick & {
+  rarityClassification: RarityLabel
+}
+
 export type TickSortType = 'taxonomicOrder' | 'firstSeen' | 'lastSeen';
 
 const tickSortValueGetters: Record<TickSortType, (tick: Tick) => number> = {
@@ -15,23 +24,39 @@ const tickSortValueGetters: Record<TickSortType, (tick: Tick) => number> = {
   firstSeen: (tick: Tick) => tick.salientRecord?.date.getTime() as number,
   lastSeen: (tick: Tick) => -(tick.salientRecord?.date.getTime() as number),
 }
-export const RARITY_CLASSIFICATIONS = [
-  "Heart attack",
-  "Blimey",
-  "Pretty Special",
-  "Very nice",
-  "Nice",
-  "Humdrum",
-]
 
-function getRarityClassifications(yearCount: number): string[] {
+
+export const RARITY_CLASSIFICATIONS: Record<RarityLabel, RarityConfig> = {
+  "Heart attack": {
+    color: "hsl(0 92% 52%)",
+  },
+  "Blimey": {
+    color: "hsl(20 92% 54%)",
+  },
+  "Pretty Special": {
+    color: "hsl(38 94% 52%)",
+  },
+  "Very nice" : {
+    color: "hsl(48 96% 56%)",
+  },
+  "Nice": {
+    color: "hsl(136 62% 42%)",
+  },
+  "Bird": {
+    color: "hsl(217 88% 52%)",
+  },
+}
+
+export const RARITY_LABELS = Object.keys(RARITY_CLASSIFICATIONS)
+
+function getRarityLabels(yearCount: number): string[] {
   if (yearCount < 6) {
-    return RARITY_CLASSIFICATIONS.filter(type => type !== 'Very nice')
+    return RARITY_LABELS.filter(type => type !== 'Very nice')
   }
 
   return [...Array(yearCount)].map((_, i) =>
-    RARITY_CLASSIFICATIONS[
-     Math.floor((RARITY_CLASSIFICATIONS.length) * (i /yearCount))
+    RARITY_LABELS[
+    Math.floor((RARITY_LABELS.length) * (i /yearCount))
     ],
   );
 }
@@ -75,7 +100,7 @@ export class TickWrapper {
   #averageBasedPredictions: number[] = []
   #detailBasedPredictions: number[] = []
   #speciesFrequencies?: Record<ScientificName, number>
-  #yearTicksBucketedByRarity: Record<number, Record<number, number>>= {}
+  #yearTicksBucketedByRarity: Record<number, Record<RarityLabel, number>>= {}
   constructor(dataWrapper: DataWrapper, orderedBy: TickSortType, direction: 'asc' | 'desc' = 'asc') {
     this.#dataWrapper = dataWrapper;
     this.#orderedBy = orderedBy;
@@ -187,15 +212,14 @@ export class TickWrapper {
   getRarityBuckets(year: number) {
     if (!this.#yearTicksBucketedByRarity[year]) {
       const numberOfComparableYears = Object.keys(this.ticksFromComparableYears).length;
-      const rarityClassifications = getRarityClassifications(numberOfComparableYears);
-      console.log(rarityClassifications)
+      const rarityLabels = getRarityLabels(numberOfComparableYears);
       const rarityBuckets: Record<number, number> = Object.fromEntries([...Array(numberOfComparableYears)].map((_, i) => [i + 1, 0]));
       this.getTicksForYear(year).ticks.forEach(({scientificName}) => {
         rarityBuckets[this.speciesFrequencies[scientificName] ?? 1]++;
       })
       this.#yearTicksBucketedByRarity[year] = Object.fromEntries(
         Object.entries(rarityBuckets)
-          .map(([yearsSeen, speciesCount]: [string, number]) => [rarityClassifications[parseInt(yearsSeen, 10) - 1],speciesCount]))
+          .map(([yearsSeen, speciesCount]: [string, number]) => [rarityLabels[parseInt(yearsSeen, 10) - 1],speciesCount]))
     }
     return this.#yearTicksBucketedByRarity[year];
   }
