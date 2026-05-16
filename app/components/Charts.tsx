@@ -2,7 +2,7 @@
 
 import {
   Chart as ChartJS,
-  ArcElement,
+  BarElement,
   CategoryScale,
   LinearScale,
   PointElement,
@@ -13,12 +13,12 @@ import {
   type ChartData,
   type ChartOptions,
 } from "chart.js";
-import { Line, Doughnut } from "react-chartjs-2";
+import { Bar, Line } from "react-chartjs-2";
 import { buildTickTally, type TickWrapper, RARITY_CLASSIFICATIONS } from "../lib/ticks";
 type RarityLabel = (typeof RARITY_CLASSIFICATIONS)[number];
 
 ChartJS.register(
-  ArcElement,
+  BarElement,
   CategoryScale,
   LinearScale,
   PointElement,
@@ -30,6 +30,24 @@ ChartJS.register(
 
 const DAY_LABELS = [...Array(365)].map((_, i) => String(i + 1));
 
+const RARITY_BUCKET_COLORS: Record<RarityLabel, string> = {
+  "Heart attack": "hsl(0 92% 52%)",
+  Blimey: "hsl(20 92% 54%)",
+  "Pretty Special": "hsl(38 94% 52%)",
+  "Very nice": "hsl(48 96% 56%)",
+  Nice: "hsl(136 62% 42%)",
+  Humdrum: "hsl(217 88% 52%)",
+};
+
+const DEFICIT_COLOR = "hsl(220 12% 92%)";
+
+function rarityBucketColor(label: string): string {
+  if (label in RARITY_BUCKET_COLORS) {
+    return RARITY_BUCKET_COLORS[label as RarityLabel];
+  }
+  return "hsl(220 10% 65%)";
+}
+
 export function YearsRaceChart({ ticks }: { ticks: TickWrapper }) {
   const thisYear = new Date().getFullYear();
   const thisYearTicks = buildTickTally(ticks.ticksByYear[thisYear], true);
@@ -38,7 +56,6 @@ export function YearsRaceChart({ ticks }: { ticks: TickWrapper }) {
       year,
       buildTickTally(yTicks),
     ]);
-
 
   const otherYearDatasets = otherYearTicks.map(([year, tally], i) => {
     return {
@@ -67,7 +84,7 @@ export function YearsRaceChart({ ticks }: { ticks: TickWrapper }) {
         tension: 0.12,
       },
       {
-        label: 'Average',
+        label: "Average",
         data: ticks.averageTickTally,
         borderColor: "rgb(120 180 235)",
         backgroundColor: "transparent",
@@ -77,8 +94,6 @@ export function YearsRaceChart({ ticks }: { ticks: TickWrapper }) {
         tension: 0.12,
       },
       ...otherYearDatasets,
-
-
     ],
   };
 
@@ -105,12 +120,14 @@ export function YearsRaceChart({ ticks }: { ticks: TickWrapper }) {
         ticks: {
           maxTicksLimit: 52,
           callback(this, tickValue) {
-            const day = typeof tickValue === "string" ? Number(tickValue) : Number(tickValue);
+            const day =
+              typeof tickValue === "string"
+                ? Number(tickValue)
+                : Number(tickValue);
             if (!Number.isFinite(day)) return "";
             return String(Math.floor(day / 7) + 1);
           },
         },
-
       },
       y: {
         title: { display: true, text: "Ticks" },
@@ -125,81 +142,69 @@ export function YearsRaceChart({ ticks }: { ticks: TickWrapper }) {
     </div>
   );
 }
+
 export function YearlyRarityComparisonCharts({ ticks }: { ticks: TickWrapper }) {
-  const {recordYearTicks} = ticks.recordTicksAndYear;
+  const { recordYearTicks } = ticks.recordTicksAndYear;
+  const years = [...ticks.comparableYears, new Date().getFullYear()].sort(
+    (a, b) => a - b,
+  );
 
-  return <div className="flex ">{[...ticks.comparableYears, new Date().getFullYear()].map((year, i) => {
-    return <RarityBucketsChart key={year} ticks={ticks} year={year} recordYearTicks={recordYearTicks}/>
-
-  })}</div>
-}
-
-const RARITY_BUCKET_COLORS: Record<RarityLabel, string> = {
-  "Heart attack": "hsl(0 92% 52%)", // bright red
-  Blimey: "hsl(20 92% 54%)", // reddish orange
-  "Pretty Special": "hsl(38 94% 52%)", // amber
-  "Very nice": "hsl(48 96% 56%)", // yellow
-  Nice: "hsl(136 62% 42%)", // green
-  Humdrum: "hsl(217 88% 52%)", // blue
-};
-function rarityBucketColor(label: string): string {
-  if (label in RARITY_BUCKET_COLORS) {
-    return RARITY_BUCKET_COLORS[label as RarityLabel];
+  if (years.length === 0 || recordYearTicks === 0) {
+    return null;
   }
-  return "hsl(220 10% 65%)";
-}
 
-function RarityBucketsChart({
-  ticks,
-  year,
-  recordYearTicks
-}: {
-  ticks: TickWrapper;
-  year: number;
-  recordYearTicks: number;
-}) {
-  const deficit = recordYearTicks - ticks.getTicksForYear(year).ticks.length;
-  const rarityBuckets = ticks.getRarityBuckets(year)
-  const counts = [...Object.values(rarityBuckets), deficit];
-  const total = counts.reduce((a, b) => a + b, 0);
-  const n = counts.length;
-  if (total === 0 || n === 0) {
-    return (
-      <div
-        className="flex h-40 w-40 shrink-0 items-center justify-center rounded-full border border-dashed border-base-300 text-xs text-base-content/50"
-        aria-label={`Rarity ${year}: no ticks`}
-      />
-    );
-  }
-  const backgroundColor = [...Object.keys(rarityBuckets).map((label) => rarityBucketColor(label)), "hsl(220 100% 100%)"];
-  const data: ChartData<"doughnut", number[], string> = {
-    labels: [...Object.keys(rarityBuckets), ''],
+  const rarityLabels = Object.keys(ticks.getRarityBuckets(years[0]));
+
+  rarityLabels.reverse();
+
+  const data: ChartData<"bar", number[], string> = {
+    labels: years.map(String),
     datasets: [
+      ...rarityLabels.map((label) => ({
+        label,
+        data: years.map((year) => ticks.getRarityBuckets(year)[label] ?? 0),
+        backgroundColor: rarityBucketColor(label),
+        borderWidth: 0,
+      })),
       {
-        data: counts,
-        backgroundColor,
+        label: "Below record",
+        data: years.map(
+          (year) => recordYearTicks - ticks.getTicksForYear(year).ticks.length,
+        ),
+        backgroundColor: DEFICIT_COLOR,
         borderWidth: 0,
       },
     ],
   };
-  const options: ChartOptions<"doughnut"> = {
+
+  const options: ChartOptions<"bar"> = {
+    indexAxis: "y",
     responsive: true,
-    maintainAspectRatio: true,
-    cutout: "55%",
+    maintainAspectRatio: false,
     plugins: {
-      legend: {
-        display: false,
+      legend: { display: true, position: "top" },
+      title: {
+        display: true,
+        text: "Ticks by rarity (stacked to year record)",
       },
-      tooltip: { enabled: false },
-        title: {
-          display: true,
-          text: String(year),
-        },
+      tooltip: { mode: "index", intersect: false },
+    },
+    scales: {
+      x: {
+        stacked: true,
+        max: recordYearTicks,
+        beginAtZero: true,
+        title: { display: true, text: "Ticks" },
+      },
+      y: { stacked: true },
     },
   };
+
+  const chartHeight = Math.max(160, years.length * 36 + 48);
+
   return (
-    <div className="h-40 w-40 shrink-0">
-      <Doughnut data={data} options={options} />
+    <div className="w-full" style={{ height: chartHeight }}>
+      <Bar data={data} options={options} />
     </div>
   );
 }

@@ -15,26 +15,25 @@ const tickSortValueGetters: Record<TickSortType, (tick: Tick) => number> = {
   firstSeen: (tick: Tick) => tick.salientRecord?.date.getTime() as number,
   lastSeen: (tick: Tick) => -(tick.salientRecord?.date.getTime() as number),
 }
-
-const INNER_RARITY_CLASSIFICATIONS = [
+export const RARITY_CLASSIFICATIONS = [
+  "Heart attack",
   "Blimey",
   "Pretty Special",
   "Very nice",
   "Nice",
-]
-export const RARITY_CLASSIFICATIONS = [
-  "Heart attack",
-  ...INNER_RARITY_CLASSIFICATIONS,
   "Humdrum",
-] as const;
-
+]
 
 function getRarityClassifications(yearCount: number): string[] {
-  return [RARITY_CLASSIFICATIONS[0], ...[...Array(yearCount - 2)].map((_, i) =>
-    INNER_RARITY_CLASSIFICATIONS[
-     Math.floor((INNER_RARITY_CLASSIFICATIONS.length) * (i /( yearCount-2)))
+  if (yearCount < 6) {
+    return RARITY_CLASSIFICATIONS.filter(type => type !== 'Very nice')
+  }
+
+  return [...Array(yearCount)].map((_, i) =>
+    RARITY_CLASSIFICATIONS[
+     Math.floor((RARITY_CLASSIFICATIONS.length) * (i /yearCount))
     ],
-  ), RARITY_CLASSIFICATIONS[RARITY_CLASSIFICATIONS.length - 1]];
+  );
 }
 
 function getTickSorter(property: TickSortType, isReversed: boolean = false): (a: Tick, b: Tick) => number {
