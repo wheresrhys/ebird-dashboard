@@ -11,7 +11,7 @@
   - ALso think of how to visually represent when a tick was an actual lifer at the time!
 - ticks per year (per list)
 - Put everything in promises and useEffect to mak erendering mroe incremental
-
+- Page showing all regions in detail for a year
  - quality ticks per year (per list) see https://docs.google.com/spreadsheets/d/1Zn7RP9e3mSVDGg0LZHWVO4q2gp1YxbGVQO1AZrLHUWE/edit?gid=713428706#gid=713428706
  - improve ticks by year to generate individually and popoulate an already extant object
  - matrix of lists totals
