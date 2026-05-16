@@ -16,7 +16,7 @@
  - improve ticks by year to generate individually and popoulate an already extant object
  - matrix of lists totals
  - star birds
-
+  - split ticks for year from ticks for all years classes. both extend a shared thing
  - comparison of years matrix
  - predict which birds I am likely to get and which I am running out of time to get
  - Gardens and seymour road lists

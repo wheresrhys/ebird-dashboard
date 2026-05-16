@@ -14,7 +14,7 @@ import {
   type ChartOptions,
 } from "chart.js";
 import { Bar, Line } from "react-chartjs-2";
-import { buildTickTally, RARITY_CLASSIFICATIONS, type TickWrapper, RarityLabel  } from "../lib/ticks";
+import { buildTickTally, getRarityLabels, RARITY_CLASSIFICATIONS, type TickWrapper, RarityLabel  } from "../lib/ticks";
 
 
 ChartJS.register(
@@ -126,16 +126,12 @@ export function YearsRaceChart({ ticks }: { ticks: TickWrapper }) {
 }
 
 export function YearlyRarityComparisonCharts({ ticks }: { ticks: TickWrapper }) {
-  const { recordYearTicks } = ticks.recordTicksAndYear;
-  const years = [...ticks.comparableYears, new Date().getFullYear()].sort(
+  const thisYear = new Date().getFullYear();
+  const years = [...ticks.comparableYears, thisYear].sort(
     (a, b) => a - b,
   );
 
-  if (years.length === 0 || recordYearTicks === 0) {
-    return null;
-  }
-
-  const rarityLabels = Object.keys(ticks.getRarityBuckets(years[0]));
+  const rarityLabels = getRarityLabels(ticks.comparableYears.length)
 
   rarityLabels.reverse();
 
@@ -144,7 +140,10 @@ export function YearlyRarityComparisonCharts({ ticks }: { ticks: TickWrapper }) 
     datasets: [
       ...rarityLabels.map((label) => ({
         label,
-        data: years.map((year) => ticks.getRarityBuckets(year)[label] ?? 0),
+        data: [...Object.values(ticks.ticksFromComparableYears), ticks.getTicksForYear(thisYear)]
+          .map(ticks =>
+            ticks.rarityBuckets[label] ?? 0
+          ),
         backgroundColor: RARITY_CLASSIFICATIONS[label as RarityLabel].color,
         borderWidth: 0,
       })),
@@ -165,7 +164,6 @@ export function YearlyRarityComparisonCharts({ ticks }: { ticks: TickWrapper }) 
     scales: {
       x: {
         stacked: true,
-        max: recordYearTicks,
         beginAtZero: true,
         title: { display: true, text: "Ticks" },
       },

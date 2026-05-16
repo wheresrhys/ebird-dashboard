@@ -4,6 +4,10 @@ import { tickableSubspecies } from '@/app/lib/sanitise-data';
 import { TickWrapper, type TickSortType} from './ticks';
 import { listConfigMap } from '../models/lists';
 
+type DataWrapperOptions = {
+  availableYears?: number[],
+  allTimeData?: DataWrapper
+}
 
 function getSpecies(rawData: EbirdDataRow[]): Species[] {
 
@@ -42,11 +46,15 @@ export class DataWrapper {
   #availableYears?: number[]
   #dataByYear: Record<number, DataWrapper> = {}
   #dataByList: Record<string, DataWrapper> = {}
+  #allTimeData?: DataWrapper
 
-  constructor(sourceData: EbirdDataRow[], filters: EbirdDataFilter[] = [], availableYears?: number[]) {
+  constructor(sourceData: EbirdDataRow[], filters: EbirdDataFilter[] = [], {availableYears, allTimeData}: DataWrapperOptions = {}) {
     this.#data = filterData(sourceData, filters)
     if (availableYears) {
       this.#availableYears = availableYears
+    }
+    if (allTimeData) {
+      this.#allTimeData = allTimeData
     }
   }
   get species () {
@@ -63,9 +71,13 @@ export class DataWrapper {
     return this.#availableYears
   }
 
+  get allTimeData(): DataWrapper {
+    return this.#allTimeData || this
+  }
+
   getDataForYear(year: number) {
     if (!this.#dataByYear[year]) {
-      this.#dataByYear[year] = this.calve([getYearFilter(year)])
+      this.#dataByYear[year] = this.calve([getYearFilter(year)], {allTimeData: this})
     }
     return this.#dataByYear[year];
   }
@@ -79,14 +91,14 @@ export class DataWrapper {
     return new TickWrapper(this, orderedBy, direction)
   }
 
-  calve(filters: EbirdDataFilter[]) {
-    return new DataWrapper(this.#data, filters, this.availableYears);
+  calve(filters: EbirdDataFilter[], options: DataWrapperOptions = {}) {
+    return new DataWrapper(this.#data, filters, { ...options, availableYears: this.availableYears});
   }
 
   calveForList(listId: string) {
     if (!this.#dataByList[listId]) {
       const { filters } = listConfigMap[listId];
-      this.#dataByList[listId] = new DataWrapper(this.#data, filters, this.availableYears);
+      this.#dataByList[listId] = this.calve(filters);
     }
     return this.#dataByList[listId];
   }
