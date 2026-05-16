@@ -21,15 +21,25 @@
  - predict which birds I am likely to get and which I am running out of time to get
  - Gardens and seymour road lists
  - search for/click on a species and get EVERYTHING on it
+ - for each non-common species, plot which years it appears for
+ - convert all dates to use temporal
+ - store day of year on ticks
+ - TODO - aggregate best ticks periods
+  - when do I get most of my lifers
+  - add lines to the rarity by date that
+    - says when all life ticks are
+    - another that just collects all the year dots on a single line (need to think about decluttering though)
+
 */
 import { getAllData } from "./actions/load-csv";
 import type { EbirdDataRow } from "./models/types";
 import {useEffect, useState} from 'react';
 import { wrapData, DataWrapper } from './lib/data-wrapper';
-import { getYearFilter } from './lib/data-filters';
 import { RARITY_CLASSIFICATIONS, type TickWrapper} from './lib/ticks';
 import { listConfigs } from './models/lists';
-import { YearsRaceChart, YearlyRarityComparisonCharts } from './components/Charts'
+import YearsLineChart from './components/YearsLineChart'
+import RarityBucketsChart from "./components/RarityBucketsChart";
+import TickYearScatterChart from "./components/TickYearScatterChart";
 function TickList({ ticks, itemNumbersDescend}: { ticks: TickWrapper, itemNumbersDescend: boolean }) {
   // TODO: have some concept of how special a bird is
   return (
@@ -71,8 +81,9 @@ function RegionDashboard({ allData, listId }: { allData: DataWrapper, listId: st
   const allTimeTicks = allTimeData.getTicks('firstSeen');
 
   return <div>
-    <YearsRaceChart ticks={allTimeTicks} />
-    <YearlyRarityComparisonCharts ticks={allTimeTicks} />
+    <YearsLineChart ticks={allTimeTicks} />
+    <RarityBucketsChart ticks={allTimeTicks} />
+    <TickYearScatterChart ticks={allTimeTicks} />
     <div className="flex">
     <div className="w-half">
       <h2>Year list</h2>
