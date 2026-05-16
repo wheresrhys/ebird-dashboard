@@ -11,7 +11,8 @@ export type Tick = Omit<Species, 'records'> & {
 export type RarityLabel = string;
 type HSL = string;
 type RarityConfig = {
-  color: HSL
+  chartColour: HSL,
+  tailwindColour: string
 }
 export type TickWithRarity = Tick & {
   rarityClassification: RarityLabel
@@ -27,23 +28,29 @@ const tickSortValueGetters: Record<TickSortType, (tick: Tick) => number> = {
 
 
 export const RARITY_CLASSIFICATIONS: Record<RarityLabel, RarityConfig> = {
-  "Heart attack": {
-    color: "hsl(0 92% 52%)",
+  "Oh Wow x3": {
+    chartColour: "hsl(0 92% 52%)",
+    tailwindColour: 'bg-red-600'
   },
   "Blimey": {
-    color: "hsl(20 92% 54%)",
+    chartColour: "hsl(20 92% 54%)",
+    tailwindColour: 'bg-orange-600'
   },
   "Pretty Special": {
-    color: "hsl(38 94% 52%)",
+    chartColour: "hsl(38 94% 52%)",
+    tailwindColour: 'bg-amber-600'
   },
   "Very nice" : {
-    color: "hsl(48 96% 56%)",
+    chartColour: "hsl(48 96% 56%)",
+    tailwindColour: 'bg-yellow-300'
   },
   "Nice": {
-    color: "hsl(136 62% 42%)",
+    chartColour: "hsl(136 62% 42%)",
+    tailwindColour: 'bg-lime-500'
   },
-  "Bird": {
-    color: "hsl(217 88% 52%)",
+  "Tweet": {
+    chartColour: "hsl(217 88% 52%)",
+    tailwindColour: 'bg-blue-500'
   },
 }
 

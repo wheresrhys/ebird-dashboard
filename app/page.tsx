@@ -27,16 +27,16 @@ import type { EbirdDataRow } from "./models/types";
 import {useEffect, useState} from 'react';
 import { wrapData, DataWrapper } from './lib/data-wrapper';
 import { getYearFilter } from './lib/data-filters';
-import type {TickWrapper} from './lib/ticks';
+import { RARITY_CLASSIFICATIONS, type TickWrapper} from './lib/ticks';
 import { listConfigs } from './models/lists';
 import { YearsRaceChart, YearlyRarityComparisonCharts } from './components/Charts'
 function TickList({ ticks, itemNumbersDescend}: { ticks: TickWrapper, itemNumbersDescend: boolean }) {
   // TODO: have some concept of how special a bird is
   return (
     <ol reversed={itemNumbersDescend ?? false} className="list-inside list-decimal">
-      {ticks.ticks.map(tick => (
-        <li className={`mb-2 ${tick.isSubspecies ? 'text-red-500' : ''}`} key={tick.scientificName}>
-          {tick.commonName} - {tick.salientRecord?.date.toLocaleDateString()} - {tick.salientRecord?.location} {tick.salientRecord.submissionId}
+      {ticks.ticksWithRarity.map(tick => (
+        <li className={`mb-2 ${tick.isSubspecies ? 'text-italic' : ''}`} key={tick.scientificName}>
+          <span className={`w-4 h-4 inline-block ${RARITY_CLASSIFICATIONS[tick.rarityClassification].tailwindColour}`}></span>{tick.commonName} - {tick.salientRecord?.date.toLocaleDateString()} - {tick.salientRecord?.location} {tick.salientRecord.submissionId}
         </li>
       ))}
     </ol>
@@ -67,7 +67,7 @@ function RegionStats({ name, id, data, onSelect, isSelected }: { name: string, i
 function RegionDashboard({ allData, listId }: { allData: DataWrapper, listId: string }) {
   const allTimeData = allData.calveForList(listId)
   const thisYear = new Date().getFullYear();
-  const thisYearData = allTimeData.calve([getYearFilter(thisYear)])
+  const thisYearData = allTimeData.getDataForYear(thisYear)
   const allTimeTicks = allTimeData.getTicks('firstSeen');
 
   return <div>

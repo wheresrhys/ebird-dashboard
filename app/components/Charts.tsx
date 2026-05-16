@@ -127,24 +127,21 @@ export function YearsRaceChart({ ticks }: { ticks: TickWrapper }) {
 
 export function YearlyRarityComparisonCharts({ ticks }: { ticks: TickWrapper }) {
   const thisYear = new Date().getFullYear();
-  const years = [...ticks.comparableYears, thisYear].sort(
-    (a, b) => a - b,
-  );
-
   const rarityLabels = getRarityLabels(ticks.comparableYears.length)
+  const barLabels = ['All time', ...Object.keys(ticks.ticksFromComparableYears), thisYear].map(String);
 
   rarityLabels.reverse();
 
   const data: ChartData<"bar", number[], string> = {
-    labels: years.map(String),
+    labels: barLabels,
     datasets: [
       ...rarityLabels.map((label) => ({
         label,
-        data: [...Object.values(ticks.ticksFromComparableYears), ticks.getTicksForYear(thisYear)]
+        data: [ticks, ...Object.values(ticks.ticksFromComparableYears), ticks.getTicksForYear(thisYear)]
           .map(ticks =>
             ticks.rarityBuckets[label] ?? 0
           ),
-        backgroundColor: RARITY_CLASSIFICATIONS[label as RarityLabel].color,
+        backgroundColor: RARITY_CLASSIFICATIONS[label as RarityLabel].chartColour,
         borderWidth: 0,
       })),
     ],
@@ -167,11 +164,13 @@ export function YearlyRarityComparisonCharts({ ticks }: { ticks: TickWrapper }) 
         beginAtZero: true,
         title: { display: true, text: "Ticks" },
       },
-      y: { stacked: true },
+      y: {
+        stacked: true
+      },
     },
   };
 
-  const chartHeight = Math.max(160, years.length * 36 + 48);
+  const chartHeight = Math.max(160, barLabels.length * 36 + 48);
 
   return (
     <div className="w-full" style={{ height: chartHeight }}>
