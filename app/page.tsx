@@ -59,8 +59,7 @@ function TickList({ ticks, itemNumbersDescend}: { ticks: TickWrapper, itemNumber
 function RegionStats({ name, id, data, onSelect, isSelected }: { name: string, id: string, data: DataWrapper, onSelect: (id: string) => void, isSelected: boolean }) {
   const filteredData = data.calveForList(id);
   const ticksWrapper = filteredData.getTicks('firstSeen');
-  const ticksByYear = ticksWrapper.ticksByYear;
-  const thisYearTicks = ticksByYear[new Date().getFullYear()];
+  const thisYearTicks = ticksWrapper.getTicksForYear(new Date().getFullYear());
   const { recordYear, recordYearTicks } = ticksWrapper.recordTicksAndYear;
   const averageTickTally = ticksWrapper.averageTickTally;
   const averageBasedPrediction = ticksWrapper.getPredictionBasedOnAverage();
@@ -102,10 +101,14 @@ function RegionDashboard({ allData, listId }: { allData: DataWrapper, listId: st
 export default function Home() {
   const [data, setData]: [EbirdDataServerRow[], (data: EbirdDataServerRow[]) => void] = useState<EbirdDataServerRow[]>([])
   const [activeList, setActiveList] = useState(listConfigs[0].id)
+  console.log('wrappe')
   const allTimeData = wrapServerData(data);
-
+  console.log('wrapped')
   useEffect(() => {
-    getAllData().then(result => setData(result as EbirdDataServerRow[]))
+    getAllData().then(result => {
+      console.log(result.length)
+      setData(result as EbirdDataServerRow[])
+    })
   }, [])
 
 

@@ -144,7 +144,7 @@ export function wrapServerData(sourceData: EbirdDataServerRow[]) {
   return new DataWrapper(sourceData.map(row => (
     {
       ...row,
-      date: Temporal.PlainDate.from(row.date)
+      date: new Temporal.PlainDate(...row.date.split('-'))
     }
   )))
 }
