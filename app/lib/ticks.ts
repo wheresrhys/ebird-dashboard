@@ -1,5 +1,5 @@
 import { EbirdDataRow, Species, ScientificName } from "../models/types";
-import { type DataWrapper, DataWrapperOptions2 } from './data-wrapper';
+import { type DataWrapper, DataWrapperOptions } from './data-wrapper';
 import { Temporal } from 'temporal-polyfill';
 import { SimpleCache } from "./simple-cache";
 
@@ -290,7 +290,7 @@ export class TickWrapper {
       year,
       orderedBy,
       direction
-    }: DataWrapperOptions2 & TickWrapperOptions) => `${listId ?? 'no-list'}:${year ? String(year) : 'no-year'}:${orderedBy}:${direction}`);
+    }: DataWrapperOptions & TickWrapperOptions) => `${listId ?? 'no-list'}:${year ? String(year) : 'no-year'}:${orderedBy}:${direction}`);
 }
 
 

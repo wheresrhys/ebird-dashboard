@@ -5,7 +5,7 @@ import { TickWrapper, type TickSortType} from './ticks';
 import { listConfigMap } from '../models/lists';
 import {SimpleCache} from './simple-cache';
 
-type DataWrapperOptions = {
+type DataWrapperMeta = {
   availableYears?: number[],
   allTimeData?: DataWrapper | null
 }
@@ -40,7 +40,7 @@ export function listAvailableYears(data: EbirdDataRow[]): number[] {
   return Array.from(new Set(data.map(row => row.date.getFullYear()))).sort();
 }
 
-export type DataWrapperOptions2 = { listId?: string, year?: number};
+export type DataWrapperOptions = { listId?: string, year?: number};
 
 
 export class DataWrapper {
@@ -48,20 +48,19 @@ export class DataWrapper {
   #species?: Species[]
   #availableYears?: number[]
   #allTimeData?: DataWrapper
-  #options: DataWrapperOptions2;
+  #options: DataWrapperOptions;
   constructor(
     sourceData: EbirdDataRow[],
-    {availableYears, allTimeData}: DataWrapperOptions = {},
-    options?: DataWrapperOptions2,
+    options: DataWrapperMeta & DataWrapperOptions = {},
   ) {
     this.#data = sourceData;
-    if (availableYears) {
-      this.#availableYears = availableYears
+    if (options.availableYears) {
+      this.#availableYears = options.availableYears
     }
-    if (allTimeData) {
-      this.#allTimeData = allTimeData
+    if (options.allTimeData) {
+      this.#allTimeData = options.allTimeData
     }
-    this.#options = options ?? {};
+    this.#options = {year: options.year, listId: options.listId};
   }
   get species () {
     if (!this.#species) {
@@ -101,7 +100,7 @@ export class DataWrapper {
     return new DataWrapper(filterData(this.#data, [filter]));
   }
 
-  calve(options: DataWrapperOptions2) {
+  calve(options: DataWrapperOptions) {
     const { listId, year } = options;
     const memoOptions = { ...this.#options, ...options }
 
@@ -118,9 +117,9 @@ export class DataWrapper {
         filteredData,
         {
           allTimeData: year ? this : null,
-          availableYears: year ? [year] : this.availableYears
+          availableYears: year ? [year] : this.availableYears,
+          ...memoOptions
         },
-        memoOptions
       );
       DataWrapper.cache.setItem(memoOptions, calvedWrapper)
     }
@@ -131,11 +130,11 @@ export class DataWrapper {
     return this.calve({ listId });
   }
 
-  static cache = new SimpleCache<DataWrapper, DataWrapperOptions2>(
+  static cache = new SimpleCache<DataWrapper, DataWrapperOptions>(
   ({
     listId,
     year
-  }: DataWrapperOptions2) => `${listId ?? 'no-list'}:${year ? String(year) : 'no-year'}`);
+  }: DataWrapperOptions) => `${listId ?? 'no-list'}:${year ? String(year) : 'no-year'}`);
 
 }
 
