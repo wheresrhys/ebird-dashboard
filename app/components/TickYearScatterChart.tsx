@@ -35,10 +35,11 @@ export default function TickYearScatterChart({ ticks }: { ticks: TickWrapper }) 
         data: allTicks.filter(({tick})  => tick.rarityClassification === label)
           .map(({year, tick}) => ({
             x: Temporal.PlainDate.from(tick.salientRecord.date.toISOString().split('T')[0]).dayOfYear,
-            y: year
+            y: year,
+            label: tick.commonName
           })),
         backgroundColor: RARITY_CLASSIFICATIONS[label].chartColour,
-        pointRadius: i +1
+        pointRadius: (i+2)
       }))
 
   }
@@ -53,7 +54,15 @@ export default function TickYearScatterChart({ ticks }: { ticks: TickWrapper }) 
         display: true,
         text: "Tick dates",
       },
-      tooltip: { mode: "index", intersect: false },
+      tooltip: {
+        // mode: "index",
+        intersect: false,
+        callbacks: {
+          label: function ({raw}: {raw: {x: number, y: number, label: string}}) {
+            return raw.label
+          }
+        }
+      },
     },
     scales: {
       x: {

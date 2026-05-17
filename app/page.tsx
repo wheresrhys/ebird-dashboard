@@ -29,7 +29,8 @@
   - add lines to the rarity by date that
     - says when all life ticks are
     - another that just collects all the year dots on a single line (need to think about decluttering though)
-
+- stop accepting filters - not needed. then can make everything memoised by default on year and region combo
+- Also make stacked rarity charts available as proportion
 */
 import { getAllData } from "./actions/load-csv";
 import type { EbirdDataRow } from "./models/types";
