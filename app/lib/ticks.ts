@@ -1,6 +1,7 @@
 import { EbirdDataRow, Species, ScientificName } from "../models/types";
-import { type DataWrapper } from './data-wrapper';
+import { type DataWrapper, DataWrapperOptions } from './data-wrapper';
 import { Temporal } from 'temporal-polyfill';
+import { SimpleCache } from "./simple-cache";
 
 const FIRST_PROPER_EBIRD_YEAR = 2021;
 
@@ -109,13 +110,16 @@ export function buildTickTally(tickWrapper: TickWrapper, terminateToday: boolean
   })
 }
 
+type TickWrapperOptions = {
+  orderedBy: TickSortType,
+  direction: 'asc' | 'desc'
+}
+
 export class TickWrapper {
   #dataWrapper: DataWrapper
   #orderedBy: TickSortType
   #direction: 'asc' | 'desc'
   #ticks?: Tick[]
-  #allTimeTicks?: TickWrapper
-  #ticksByYear: Record<number, TickWrapper> = {}
   #averageBasedPredictions: number[] = []
   #detailBasedPredictions: number[] = []
   #speciesFrequencies?: Record<ScientificName, number>
@@ -144,17 +148,11 @@ export class TickWrapper {
   }
 
   get allTimeTicks(): TickWrapper {
-    if (!this.#allTimeTicks) {
-      this.#allTimeTicks = this.#dataWrapper.allTimeData.getTicks(this.#orderedBy, this.#direction)
-    }
-    return this.#allTimeTicks
+    return this.#dataWrapper.allTimeData.getTicks(this.#orderedBy, this.#direction)
   }
 
   getTicksForYear(year: number) {
-    if (!this.#ticksByYear[year]) {
-      this.#ticksByYear[year] = this.#dataWrapper.dataByYear[year].getTicks(this.#orderedBy, this.#direction)
-    }
-    return this.#ticksByYear[year]
+    return this.#dataWrapper.getDataForYear(year).getTicks(this.#orderedBy, this.#direction)
   }
 
   get ticksByYear(): Record<number, TickWrapper> {
@@ -189,10 +187,10 @@ export class TickWrapper {
     if (!this.#detailBasedPredictions[dayOfYear - 1]) {
       const thisYearTicks = this.ticksByYear[new Date().getFullYear()];
       const thisYearScientificNames = thisYearTicks.ticks.map(tick => tick.scientificName)
-      const futureTicksByYear = this.#dataWrapper.calve([row => {
+      const futureTicksByYear = this.#dataWrapper.filter(row => {
         const rowDayOfYear = Temporal.PlainDate.from(row.date.toISOString().split('T')[0]).dayOfYear;
         return rowDayOfYear > (dayOfYear - 14) && !thisYearScientificNames.includes(row.scientificName)
-      }]).getTicks('firstSeen').ticksFromComparableYears;
+      }).getTicks('firstSeen').ticksFromComparableYears;
 
       const numberOfComparatorYears = Object.keys(futureTicksByYear).length;
       const allComparableTicks = Object.values(futureTicksByYear).flatMap(wrapper => wrapper.ticks)
@@ -272,6 +270,23 @@ export class TickWrapper {
     });
     return { recordYear, recordYearTicks }
   }
+
+
+  static construct(dataWrapper: DataWrapper, orderedBy: TickSortType, direction: 'asc' | 'desc') {
+    const cacheOptions = { ...dataWrapper.options, orderedBy, direction }
+    if (!TickWrapper.cache.getItem(cacheOptions)) {
+      TickWrapper.cache.setItem(cacheOptions, new TickWrapper(dataWrapper, orderedBy, direction))
+    }
+    return TickWrapper.cache.getItem(cacheOptions)
+  }
+
+  static cache = new SimpleCache<TickWrapper, TickWrapperOptions>(
+    ({
+      listId,
+      year,
+      orderedBy,
+      direction
+    }: DataWrapperOptions & TickWrapperOptions) => `${listId ?? 'no-list'}:${year ? String(year) : 'no-year'}:${orderedBy}:${direction}`);
 }
 
 

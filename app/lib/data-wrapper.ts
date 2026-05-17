@@ -3,10 +3,11 @@ import { filterData, getYearFilter, type EbirdDataFilter } from './data-filters'
 import { tickableSubspecies } from '@/app/lib/sanitise-data';
 import { TickWrapper, type TickSortType} from './ticks';
 import { listConfigMap } from '../models/lists';
+import {SimpleCache} from './simple-cache';
 
-type DataWrapperOptions = {
+type DataWrapperMeta = {
   availableYears?: number[],
-  allTimeData?: DataWrapper
+  allTimeData?: DataWrapper | null
 }
 
 function getSpecies(rawData: EbirdDataRow[]): Species[] {
@@ -39,23 +40,27 @@ export function listAvailableYears(data: EbirdDataRow[]): number[] {
   return Array.from(new Set(data.map(row => row.date.getFullYear()))).sort();
 }
 
+export type DataWrapperOptions = { listId?: string, year?: number};
+
 
 export class DataWrapper {
   #data: EbirdDataRow[]
   #species?: Species[]
   #availableYears?: number[]
-  #dataByYear: Record<number, DataWrapper> = {}
-  #dataByList: Record<string, DataWrapper> = {}
   #allTimeData?: DataWrapper
-
-  constructor(sourceData: EbirdDataRow[], filters: EbirdDataFilter[] = [], {availableYears, allTimeData}: DataWrapperOptions = {}) {
-    this.#data = filterData(sourceData, filters)
-    if (availableYears) {
-      this.#availableYears = availableYears
+  #options: DataWrapperOptions;
+  constructor(
+    sourceData: EbirdDataRow[],
+    options: DataWrapperMeta & DataWrapperOptions = {},
+  ) {
+    this.#data = sourceData;
+    if (options.availableYears) {
+      this.#availableYears = options.availableYears
     }
-    if (allTimeData) {
-      this.#allTimeData = allTimeData
+    if (options.allTimeData) {
+      this.#allTimeData = options.allTimeData
     }
+    this.#options = {year: options.year, listId: options.listId};
   }
   get species () {
     if (!this.#species) {
@@ -75,35 +80,65 @@ export class DataWrapper {
     return this.#allTimeData || this
   }
 
-  getDataForYear(year: number) {
-    if (!this.#dataByYear[year]) {
-      this.#dataByYear[year] = this.calve([getYearFilter(year)], {allTimeData: this})
-    }
-    return this.#dataByYear[year];
+  getDataForYear(year: number): DataWrapper {
+    return this.calve({ year });
   }
 
   get dataByYear() {
     return Object.fromEntries(this.availableYears.map(year => [year, this.getDataForYear(year)]))
   }
 
-  // todo - memoise this
-  getTicks(orderedBy: TickSortType, direction: 'asc' | 'desc' = 'asc'): TickWrapper {
-    return new TickWrapper(this, orderedBy, direction)
+  get options() {
+    return this.#options;
   }
 
-  calve(filters: EbirdDataFilter[], options: DataWrapperOptions = {}) {
-    return new DataWrapper(this.#data, filters, { ...options, availableYears: this.availableYears});
+  getTicks(orderedBy: TickSortType, direction: 'asc' | 'desc' = 'asc'): TickWrapper {
+    return TickWrapper.construct(this, orderedBy, direction)
+  }
+
+  filter(filter: EbirdDataFilter) {
+    return new DataWrapper(filterData(this.#data, [filter]));
+  }
+
+  calve(options: DataWrapperOptions) {
+    const { listId, year } = options;
+    const memoOptions = { ...this.#options, ...options }
+
+    if (!DataWrapper.cache.getItem(memoOptions)) {
+      const filters = [];
+      if (year) {
+        filters.push(getYearFilter(year))
+      }
+      if (listId) {
+        filters.push(...listConfigMap[listId].filters)
+      }
+      const filteredData = filterData(this.#data, filters)
+      const calvedWrapper = new DataWrapper(
+        filteredData,
+        {
+          allTimeData: year ? this : null,
+          availableYears: year ? [year] : this.availableYears,
+          ...memoOptions
+        },
+      );
+      DataWrapper.cache.setItem(memoOptions, calvedWrapper)
+    }
+    return DataWrapper.cache.getItem(memoOptions);
   }
 
   calveForList(listId: string) {
-    if (!this.#dataByList[listId]) {
-      const { filters } = listConfigMap[listId];
-      this.#dataByList[listId] = this.calve(filters);
-    }
-    return this.#dataByList[listId];
+    return this.calve({ listId });
   }
+
+  static cache = new SimpleCache<DataWrapper, DataWrapperOptions>(
+  ({
+    listId,
+    year
+  }: DataWrapperOptions) => `${listId ?? 'no-list'}:${year ? String(year) : 'no-year'}`);
+
 }
 
-export function wrapData(sourceData: EbirdDataRow[], filters: EbirdDataFilter[] = []) {
-  return new DataWrapper(sourceData, filters)
+// TDOD turn intoa static class method and put memoisation in here too
+export function wrapData(sourceData: EbirdDataRow[]) {
+  return new DataWrapper(sourceData)
 }

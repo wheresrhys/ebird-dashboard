@@ -31,6 +31,7 @@
     - another that just collects all the year dots on a single line (need to think about decluttering though)
 - stop accepting filters - not needed. then can make everything memoised by default on year and region combo
 - Also make stacked rarity charts available as proportion
+- chart comparing all lists for a year (or for all time) in a line
 */
 import { getAllData } from "./actions/load-csv";
 import type { EbirdDataRow } from "./models/types";
@@ -107,17 +108,6 @@ export default function Home() {
     getAllData().then(result => setData(result as EbirdDataRow[]))
   }, [])
 
-
-
-
-  // const allTimeTicks = allTimeData.getTicks('firstSeen');
-
-  // const predictions = [...Array(365)].map(dayOfYear => {
-  //   return data.length ? {
-  //     detail: allTimeTicks.getPredictionBasedOnDetail(dayOfYear+1),
-  //     average: allTimeTicks.getPredictionBasedOnAverage(dayOfYear+1),
-  //   } : {}
-  // })
 
   return (
     <div>
