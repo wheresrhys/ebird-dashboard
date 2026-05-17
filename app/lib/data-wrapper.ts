@@ -48,23 +48,14 @@ export class DataWrapper {
   #species?: Species[]
   #availableYears?: number[]
   #allTimeData?: DataWrapper
-  #cache: SimpleCache<DataWrapper, DataWrapperOptions2>;
   #options: DataWrapperOptions2;
   constructor(
     sourceData: EbirdDataRow[],
     filters: EbirdDataFilter[] = [],
     {availableYears, allTimeData}: DataWrapperOptions = {},
     options?: DataWrapperOptions2,
-    cache?: SimpleCache<DataWrapper, DataWrapperOptions2>
   ) {
     this.#data = filterData(sourceData, filters)
-    this.#cache = cache ?? new SimpleCache<DataWrapper, DataWrapperOptions2>(
-      ({
-        listId,
-        year
-      }: DataWrapperOptions2) => `${listId ?? 'no-list'}:${year ? String(year) : 'no-year'}`
-
-);
     if (availableYears) {
       this.#availableYears = availableYears
     }
@@ -111,7 +102,7 @@ export class DataWrapper {
   memoizedCalve(options: DataWrapperOptions2) {
     const { listId, year } = options;
     const memoOptions = { ...this.#options, ...options }
-    if (!this.#cache.getItem(memoOptions)) {
+    if (!DataWrapper.cache.getItem(memoOptions)) {
       const filters = [];
       if (year) {
         filters.push(getYearFilter(year))
@@ -127,17 +118,22 @@ export class DataWrapper {
           allTimeData: year ? this : null,
           availableYears: year ? [year] : this.availableYears
         },
-        options,
-        this.#cache
+        options
       );
-      this.#cache.setItem(memoOptions, calvedWrapper)
+      DataWrapper.cache.setItem(memoOptions, calvedWrapper)
     }
-    return this.#cache.getItem(memoOptions);
+    return DataWrapper.cache.getItem(memoOptions);
   }
 
   calveForList(listId: string) {
     return this.memoizedCalve({ listId });
   }
+
+  static cache = new SimpleCache<DataWrapper, DataWrapperOptions2>(
+  ({
+    listId,
+    year
+  }: DataWrapperOptions2) => `${listId ?? 'no-list'}:${year ? String(year) : 'no-year'}`);
 }
 
 export function wrapData(sourceData: EbirdDataRow[], filters: EbirdDataFilter[] = []) {
