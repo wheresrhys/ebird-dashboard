@@ -63,7 +63,7 @@ function RegionStats({ name, id, data, onSelect, isSelected }: { name: string, i
   const { recordYear, recordYearTicks } = ticksWrapper.recordTicksAndYear;
   const averageTickTally = ticksWrapper.averageTickTally;
   const averageBasedPrediction = ticksWrapper.getPredictionBasedOnAverage();
-  const detailBasedPrediction = ticksWrapper.getPredictionBasedOnDetail();
+  const detailBasedPrediction = 0//ticksWrapper.getPredictionBasedOnDetail();
 
   return (
     <div className={`stat ${isSelected ? 'bg-gray-100' : ''} cursor-pointer`} onClick={() => onSelect(id)}>
@@ -107,17 +107,6 @@ export default function Home() {
     getAllData().then(result => setData(result as EbirdDataRow[]))
   }, [])
 
-
-
-
-  // const allTimeTicks = allTimeData.getTicks('firstSeen');
-
-  // const predictions = [...Array(365)].map(dayOfYear => {
-  //   return data.length ? {
-  //     detail: allTimeTicks.getPredictionBasedOnDetail(dayOfYear+1),
-  //     average: allTimeTicks.getPredictionBasedOnAverage(dayOfYear+1),
-  //   } : {}
-  // })
 
   return (
     <div>

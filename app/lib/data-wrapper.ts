@@ -47,7 +47,6 @@ export class DataWrapper {
   #data: EbirdDataRow[]
   #species?: Species[]
   #availableYears?: number[]
-  #dataByList: Record<string, DataWrapper> = {}
   #allTimeData?: DataWrapper
   #memoizer: DataMemoizer;
   #options: DataWrapperOptions2;
@@ -86,8 +85,8 @@ export class DataWrapper {
     return this.#allTimeData || this
   }
 
-  getDataForYear(year: number) {
-    return this.#memoizer.getChildDataWrapper({year})
+  getDataForYear(year: number): DataWrapper {
+    return this.memoizedCalve({ year });
   }
 
   get dataByYear() {
@@ -120,18 +119,17 @@ export class DataWrapper {
         allTimeData: year ? this : null,
         availableYears: year ? [year] : this.availableYears
       },
-      {...this.#options, ...options},
+      options,
       this.#memoizer
     );
   }
 
+  memoizedCalve (options: DataWrapperOptions2) {
+    return this.#memoizer.getChildDataWrapper({ ...this.#options, ...options });
+  }
+
   calveForList(listId: string) {
-    // return this.newCalve({listId})
-    if (!this.#dataByList[listId]) {
-      const { filters } = listConfigMap[listId];
-      this.#dataByList[listId] = this.calve(filters);
-    }
-    return this.#dataByList[listId];
+    return this.memoizedCalve({ listId });
   }
 }
 
