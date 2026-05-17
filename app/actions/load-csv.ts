@@ -4,11 +4,11 @@ import path from 'path';
 import neatCsv from 'neat-csv';
 import { camelCase } from 'change-case';
 import { sanitiseData } from '@/app/lib/sanitise-data';
-import type { EbirdDataRow } from '../models/types';
-import { Temporal } from 'temporal-polyfill';
+import type { EbirdDataServerRow } from '../models/types';
+
 async function loadCsv () {
-const csvFilePath = path.resolve('./data/MyEbirdData.csv');
-const rawData: EbirdDataRow[] = await neatCsv(fs.createReadStream(csvFilePath), {
+  const csvFilePath = path.resolve('./data/MyEbirdData.csv');
+  const rawData: EbirdDataServerRow[] = await neatCsv(fs.createReadStream(csvFilePath), {
   mapHeaders: ({ header }) => {
     const camelCased = camelCase(header);
     return ['time',
@@ -31,9 +31,6 @@ const rawData: EbirdDataRow[] = await neatCsv(fs.createReadStream(csvFilePath), 
       case 'latitude':
       case 'longitude':
         return parseFloat(value);
-      case 'date':
-        const [year, month, day] = value.split('-');
-        return new Temporal.PlainDate(year, month, day);
       default:
         return value as string;
     }
@@ -42,9 +39,9 @@ const rawData: EbirdDataRow[] = await neatCsv(fs.createReadStream(csvFilePath), 
   return sanitiseData(rawData)
 }
 
-let sanitisedData: EbirdDataRow[];
+let sanitisedData: EbirdDataServerRow[];
 
-export async function getAllData(): Promise<EbirdDataRow[]> {
+export async function getAllData(): Promise<EbirdDataServerRow[]> {
   if (!sanitisedData) {
     sanitisedData = await loadCsv()
   }

@@ -34,9 +34,9 @@
 - chart comparing all lists for a year (or for all time) in a line
 */
 import { getAllData } from "./actions/load-csv";
-import type { EbirdDataRow } from "./models/types";
+import type { EbirdDataServerRow } from "./models/types";
 import {useEffect, useState} from 'react';
-import { wrapData, DataWrapper } from './lib/data-wrapper';
+import { wrapServerData, DataWrapper } from './lib/data-wrapper';
 import { RARITY_CLASSIFICATIONS, type TickWrapper} from './lib/ticks';
 import { listConfigs } from './models/lists';
 import YearsLineChart from './components/YearsLineChart'
@@ -48,7 +48,7 @@ function TickList({ ticks, itemNumbersDescend}: { ticks: TickWrapper, itemNumber
     <ol reversed={itemNumbersDescend ?? false} className="list-inside list-decimal">
       {ticks.ticksWithRarity.map(tick => (
         <li className={`mb-2 ${tick.isSubspecies ? 'text-italic' : ''}`} key={tick.scientificName}>
-          <span className={`w-4 h-4 inline-block ${RARITY_CLASSIFICATIONS[tick.rarityClassification].tailwindColour}`}></span>{tick.commonName} - {tick.salientRecord?.date.toLocaleDateString()} - {tick.salientRecord?.location} {tick.salientRecord.submissionId}
+          <span className={`w-4 h-4 inline-block ${RARITY_CLASSIFICATIONS[tick.rarityClassification].tailwindColour}`}></span>{tick.commonName} - {tick.salientRecord?.date.toString()} - {tick.salientRecord?.location} {tick.salientRecord.submissionId}
         </li>
       ))}
     </ol>
@@ -100,12 +100,12 @@ function RegionDashboard({ allData, listId }: { allData: DataWrapper, listId: st
 
 
 export default function Home() {
-  const [data, setData]: [EbirdDataRow[], (data: EbirdDataRow[]) => void] = useState<EbirdDataRow[]>([])
+  const [data, setData]: [EbirdDataServerRow[], (data: EbirdDataServerRow[]) => void] = useState<EbirdDataServerRow[]>([])
   const [activeList, setActiveList] = useState(listConfigs[0].id)
-  const allTimeData = wrapData(data);
+  const allTimeData = wrapServerData(data);
 
   useEffect(() => {
-    getAllData().then(result => setData(result as EbirdDataRow[]))
+    getAllData().then(result => setData(result as EbirdDataServerRow[]))
   }, [])
 
 

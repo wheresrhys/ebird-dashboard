@@ -9,7 +9,7 @@ export type Longitude = number;
 export type TaxonomicOrder = number;
 export type ScientificName = string;
 
-export type EbirdDataRow = {
+export type EbirdDataSharedRow = {
   commonName: string;
   scientificName: ScientificName;
   taxonomicOrder: TaxonomicOrder;
@@ -21,9 +21,16 @@ export type EbirdDataRow = {
   latitude: Latitude;
   longitude: Longitude;
   submissionId: SubmissionId;
-  date: Temporal.PlainDate;
   count: number;
 }
+
+export type EbirdDataServerRow = EbirdDataSharedRow & {
+  date: string;
+}
+export type EbirdDataRow = EbirdDataSharedRow & {
+  date: Temporal.PlainDate;
+}
+
 
 export type Species = {
   commonName: string;

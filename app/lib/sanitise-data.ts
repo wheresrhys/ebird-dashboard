@@ -1,4 +1,4 @@
-import { EbirdDataRow, TaxonomicOrder, Species, ScientificName } from "@/app/models/types";
+import { EbirdDataServerRow, Species, ScientificName } from "@/app/models/types";
 /*
 
 
@@ -63,7 +63,7 @@ const preferredCommonNames: Record<ScientificName, string> = {
   'Motacilla alba': 'Pied Wagtail',
 }
 
-function overrideCommonName(row: EbirdDataRow): EbirdDataRow {
+function overrideCommonName(row: EbirdDataServerRow): EbirdDataServerRow {
   const preferredCommonName = preferredCommonNames[row.scientificName];
   if (preferredCommonName) {
     return {
@@ -74,7 +74,7 @@ function overrideCommonName(row: EbirdDataRow): EbirdDataRow {
   return row;
 }
 
-export function sanitiseData(data: EbirdDataRow[]): EbirdDataRow[] {
+export function sanitiseData(data: EbirdDataServerRow[]): EbirdDataServerRow[] {
   const encounteredSpeciesMap: Record<ScientificName, BasicSpecies> = {};
   const awkwardSpeciesMap: Record<ScientificName, AwkwardSpecies> = {};
 

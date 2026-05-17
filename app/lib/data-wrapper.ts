@@ -1,9 +1,10 @@
-import { EbirdDataRow, Species } from "../models/types";
+import type { EbirdDataRow, EbirdDataServerRow, Species } from "../models/types";
 import { filterData, getYearFilter, type EbirdDataFilter } from './data-filters'
 import { tickableSubspecies } from '@/app/lib/sanitise-data';
 import { TickWrapper, type TickSortType} from './ticks';
 import { listConfigMap } from '../models/lists';
 import {SimpleCache} from './simple-cache';
+import { Temporal } from 'temporal-polyfill';
 
 type DataWrapperMeta = {
   availableYears?: number[],
@@ -139,6 +140,11 @@ export class DataWrapper {
 }
 
 // TDOD turn intoa static class method and put memoisation in here too
-export function wrapData(sourceData: EbirdDataRow[]) {
-  return new DataWrapper(sourceData)
+export function wrapServerData(sourceData: EbirdDataServerRow[]) {
+  return new DataWrapper(sourceData.map(row => (
+    {
+      ...row,
+      date: Temporal.PlainDate.from(row.date)
+    }
+  )))
 }
