@@ -31,13 +31,13 @@ function getSpecies(rawData: EbirdDataRow[]): Species[] {
 
   const species = Object.values(speciesMap);
   species.forEach(sp => {
-    sp.records = sp.records.sort((a, b) => a.date.getTime() - b.date.getTime())
+    sp.records = sp.records.sort((a, b) => a.date.since(b.date).sign)
   })
   return species;
 }
 
 export function listAvailableYears(data: EbirdDataRow[]): number[] {
-  return Array.from(new Set(data.map(row => row.date.getFullYear()))).sort();
+  return Array.from(new Set(data.map(row => row.date.year))).sort();
 }
 
 export type DataWrapperOptions = { listId?: string, year?: number};

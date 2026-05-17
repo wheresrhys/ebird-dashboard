@@ -1,3 +1,5 @@
+import { Temporal } from 'temporal-polyfill';
+
 export type SubmissionId = string;
 export type County = string;
 export type LocationId = string;
@@ -19,7 +21,7 @@ export type EbirdDataRow = {
   latitude: Latitude;
   longitude: Longitude;
   submissionId: SubmissionId;
-  date: Date;
+  date: Temporal.PlainDate;
   count: number;
 }
 

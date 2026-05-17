@@ -34,7 +34,7 @@ export default function TickYearScatterChart({ ticks }: { ticks: TickWrapper }) 
         label: label,
         data: allTicks.filter(({tick})  => tick.rarityClassification === label)
           .map(({year, tick}) => ({
-            x: Temporal.PlainDate.from(tick.salientRecord.date.toISOString().split('T')[0]).dayOfYear,
+            x: tick.salientRecord.date.dayOfYear,
             y: year,
             label: tick.commonName
           })),

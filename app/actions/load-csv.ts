@@ -5,7 +5,7 @@ import neatCsv from 'neat-csv';
 import { camelCase } from 'change-case';
 import { sanitiseData } from '@/app/lib/sanitise-data';
 import type { EbirdDataRow } from '../models/types';
-
+import { Temporal } from 'temporal-polyfill';
 async function loadCsv () {
 const csvFilePath = path.resolve('./data/MyEbirdData.csv');
 const rawData: EbirdDataRow[] = await neatCsv(fs.createReadStream(csvFilePath), {
@@ -32,7 +32,8 @@ const rawData: EbirdDataRow[] = await neatCsv(fs.createReadStream(csvFilePath), 
       case 'longitude':
         return parseFloat(value);
       case 'date':
-        return new Date(value);
+        const [year, month, day] = value.split('-');
+        return new Temporal.PlainDate(year, month, day);
       default:
         return value as string;
     }

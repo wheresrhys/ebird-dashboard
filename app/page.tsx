@@ -1,6 +1,8 @@
 'use client'
 
 /*
+- Handle leap year
+- store day of year on ticks
 - squished bar chart (like a DNA result) showing a vertical line for every tick coloured by rarity
 - doughnut charts should be scaled according to the biggest year, so that the wedges mean the same number of birds in each chart. I want to be able to say 'in this year I saw more or less common birds than year x'
 - Maybe donut isn't the right paradigm, it shoudl be more like a horizontal stacked bar, and clicking a button allows them to be stacked as lines in chronological order - YES!!!
@@ -13,7 +15,6 @@
 - Put everything in promises and useEffect to mak erendering mroe incremental
 - Page showing all regions in detail for a year
  - quality ticks per year (per list) see https://docs.google.com/spreadsheets/d/1Zn7RP9e3mSVDGg0LZHWVO4q2gp1YxbGVQO1AZrLHUWE/edit?gid=713428706#gid=713428706
- - improve ticks by year to generate individually and popoulate an already extant object
  - matrix of lists totals
  - star birds
   - split ticks for year from ticks for all years classes. both extend a shared thing
@@ -22,8 +23,7 @@
  - Gardens and seymour road lists
  - search for/click on a species and get EVERYTHING on it
  - for each non-common species, plot which years it appears for
- - convert all dates to use temporal
- - store day of year on ticks
+
  - TODO - aggregate best ticks periods
   - when do I get most of my lifers
   - add lines to the rarity by date that

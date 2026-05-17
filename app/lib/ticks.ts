@@ -21,10 +21,10 @@ export type TickWithRarity = Tick & {
 
 export type TickSortType = 'taxonomicOrder' | 'firstSeen' | 'lastSeen';
 
-const tickSortValueGetters: Record<TickSortType, (tick: Tick) => number> = {
-  taxonomicOrder: (tick: Tick) => tick.taxonomicOrder as number,
-  firstSeen: (tick: Tick) => tick.salientRecord?.date.getTime() as number,
-  lastSeen: (tick: Tick) => -(tick.salientRecord?.date.getTime() as number),
+const tickSorters: Record<TickSortType, (t1: Tick, t2: Tick) => number> = {
+  taxonomicOrder: (t1: Tick, t2: Tick) => t1.taxonomicOrder - t2.taxonomicOrder,
+  firstSeen: (t1: Tick, t2: Tick) => t1.salientRecord.date.since(t2.salientRecord.date).sign,
+  lastSeen: (t1: Tick, t2: Tick) => t2.salientRecord.date.since(t1.salientRecord.date).sign,
 }
 
 
@@ -70,8 +70,8 @@ export function getRarityLabels(yearCount: number): string[] {
 }
 
 function getTickSorter(property: TickSortType, isReversed: boolean = false): (a: Tick, b: Tick) => number {
-  const valueGetter = tickSortValueGetters[property];
-  return (a, b) => (valueGetter(a) - valueGetter(b)) * (isReversed ? -1 : 1);
+  const sorter = tickSorters[property];
+  return (a, b) => sorter(a, b) * (isReversed ? -1 : 1);
 }
 
 function getToday () {
@@ -96,7 +96,7 @@ export function excludeNonComparableYears<T>(dataByYear: Record<number, T>): Rec
 
 export function buildTickTally(tickWrapper: TickWrapper, terminateToday: boolean = false): number[] {
   const tickTimings = tickWrapper.ticks.map(tick =>
-    Temporal.PlainDate.from(tick.salientRecord.date.toISOString().split('T')[0]).dayOfYear)
+    tick.salientRecord.date.dayOfYear)
   let lastDate = 365;
   if (terminateToday) {
     lastDate = Temporal.PlainDate.from(new Date().toISOString().split('T')[0]).dayOfYear
@@ -188,7 +188,7 @@ export class TickWrapper {
       const thisYearTicks = this.ticksByYear[new Date().getFullYear()];
       const thisYearScientificNames = thisYearTicks.ticks.map(tick => tick.scientificName)
       const futureTicksByYear = this.#dataWrapper.filter(row => {
-        const rowDayOfYear = Temporal.PlainDate.from(row.date.toISOString().split('T')[0]).dayOfYear;
+        const rowDayOfYear = row.date.dayOfYear;
         return rowDayOfYear > (dayOfYear - 14) && !thisYearScientificNames.includes(row.scientificName)
       }).getTicks('firstSeen').ticksFromComparableYears;
 
