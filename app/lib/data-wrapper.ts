@@ -3,10 +3,11 @@ import { filterData, getYearFilter, type EbirdDataFilter } from './data-filters'
 import { tickableSubspecies } from '@/app/lib/sanitise-data';
 import { TickWrapper, type TickSortType} from './ticks';
 import { listConfigMap } from '../models/lists';
+import {DataMemoizer} from './data-memoizer';
 
 type DataWrapperOptions = {
   availableYears?: number[],
-  allTimeData?: DataWrapper
+  allTimeData?: DataWrapper | null
 }
 
 function getSpecies(rawData: EbirdDataRow[]): Species[] {
@@ -39,23 +40,33 @@ export function listAvailableYears(data: EbirdDataRow[]): number[] {
   return Array.from(new Set(data.map(row => row.date.getFullYear()))).sort();
 }
 
+export type DataWrapperOptions2 = { listId?: string, year?: number }
+
 
 export class DataWrapper {
   #data: EbirdDataRow[]
   #species?: Species[]
   #availableYears?: number[]
-  #dataByYear: Record<number, DataWrapper> = {}
   #dataByList: Record<string, DataWrapper> = {}
   #allTimeData?: DataWrapper
-
-  constructor(sourceData: EbirdDataRow[], filters: EbirdDataFilter[] = [], {availableYears, allTimeData}: DataWrapperOptions = {}) {
+  #memoizer: DataMemoizer;
+  #options: DataWrapperOptions2;
+  constructor(
+    sourceData: EbirdDataRow[],
+    filters: EbirdDataFilter[] = [],
+    {availableYears, allTimeData}: DataWrapperOptions = {},
+    options?: DataWrapperOptions2,
+    memoizer?: DataMemoizer
+  ) {
     this.#data = filterData(sourceData, filters)
+    this.#memoizer = memoizer ?? new DataMemoizer(this);
     if (availableYears) {
       this.#availableYears = availableYears
     }
     if (allTimeData) {
       this.#allTimeData = allTimeData
     }
+    this.#options = options ?? {};
   }
   get species () {
     if (!this.#species) {
@@ -76,10 +87,7 @@ export class DataWrapper {
   }
 
   getDataForYear(year: number) {
-    if (!this.#dataByYear[year]) {
-      this.#dataByYear[year] = this.calve([getYearFilter(year)], {allTimeData: this})
-    }
-    return this.#dataByYear[year];
+    return this.#memoizer.getChildDataWrapper({year})
   }
 
   get dataByYear() {
@@ -95,7 +103,30 @@ export class DataWrapper {
     return new DataWrapper(this.#data, filters, { ...options, availableYears: this.availableYears});
   }
 
+  newCalve(options: DataWrapperOptions2) {
+    const { listId, year } = options;
+    const filters = [];
+    if (year) {
+      filters.push(getYearFilter(year))
+    }
+    if (listId) {
+      filters.push(...listConfigMap[listId].filters)
+    }
+
+    return new DataWrapper(
+      this.#data,
+      filters,
+      {
+        allTimeData: year ? this : null,
+        availableYears: year ? [year] : this.availableYears
+      },
+      {...this.#options, ...options},
+      this.#memoizer
+    );
+  }
+
   calveForList(listId: string) {
+    // return this.newCalve({listId})
     if (!this.#dataByList[listId]) {
       const { filters } = listConfigMap[listId];
       this.#dataByList[listId] = this.calve(filters);
