@@ -58,7 +58,7 @@ export class DataWrapper {
     memoizer?: DataMemoizer
   ) {
     this.#data = filterData(sourceData, filters)
-    this.#memoizer = memoizer ?? new DataMemoizer(this);
+    this.#memoizer = memoizer ?? new DataMemoizer();
     if (availableYears) {
       this.#availableYears = availableYears
     }
@@ -102,30 +102,31 @@ export class DataWrapper {
     return new DataWrapper(this.#data, filters, { ...options, availableYears: this.availableYears});
   }
 
-  newCalve(options: DataWrapperOptions2) {
+  memoizedCalve(options: DataWrapperOptions2) {
     const { listId, year } = options;
-    const filters = [];
-    if (year) {
-      filters.push(getYearFilter(year))
-    }
-    if (listId) {
-      filters.push(...listConfigMap[listId].filters)
-    }
+    const memoOptions = { ...this.#options, ...options }
+    if (!this.#memoizer.getMemoizedDataWrapper(memoOptions)) {
+      const filters = [];
+      if (year) {
+        filters.push(getYearFilter(year))
+      }
+      if (listId) {
+        filters.push(...listConfigMap[listId].filters)
+      }
 
-    return new DataWrapper(
-      this.#data,
-      filters,
-      {
-        allTimeData: year ? this : null,
-        availableYears: year ? [year] : this.availableYears
-      },
-      options,
-      this.#memoizer
-    );
-  }
-
-  memoizedCalve (options: DataWrapperOptions2) {
-    return this.#memoizer.getChildDataWrapper({ ...this.#options, ...options });
+      const calvedWrapper = new DataWrapper(
+        this.#data,
+        filters,
+        {
+          allTimeData: year ? this : null,
+          availableYears: year ? [year] : this.availableYears
+        },
+        options,
+        this.#memoizer
+      );
+      this.#memoizer.setMemoizedDataWrapper(memoOptions, calvedWrapper)
+    }
+    return this.#memoizer.getMemoizedDataWrapper(memoOptions);
   }
 
   calveForList(listId: string) {

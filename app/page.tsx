@@ -63,7 +63,7 @@ function RegionStats({ name, id, data, onSelect, isSelected }: { name: string, i
   const { recordYear, recordYearTicks } = ticksWrapper.recordTicksAndYear;
   const averageTickTally = ticksWrapper.averageTickTally;
   const averageBasedPrediction = ticksWrapper.getPredictionBasedOnAverage();
-  const detailBasedPrediction = 0//ticksWrapper.getPredictionBasedOnDetail();
+  const detailBasedPrediction = ticksWrapper.getPredictionBasedOnDetail();
 
   return (
     <div className={`stat ${isSelected ? 'bg-gray-100' : ''} cursor-pointer`} onClick={() => onSelect(id)}>

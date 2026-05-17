@@ -1,23 +1,22 @@
 import {type DataWrapper, DataWrapperOptions2} from './data-wrapper';
 let counts = 0;
 
+function getMemoKey({
+  listId,
+  year
+}: DataWrapperOptions2) {
+  return `${listId ?? 'no-list'}:${year ? String(year) : 'no-year'}`
+}
+
 export class DataMemoizer {
-  #dataWrapper: DataWrapper
   #memoizedDataWrappers: Record<string, DataWrapper> = {}
-  constructor (dataWrapper: DataWrapper) {
-    this.#dataWrapper = dataWrapper;
+  constructor () {  }
+
+  getMemoizedDataWrapper(options: DataWrapperOptions2) {
+    return this.#memoizedDataWrappers[getMemoKey(options)]
   }
 
-  getChildDataWrapper({
-    listId,
-    year
-  }: DataWrapperOptions2) {
-    const memoKey = `${listId ?? 'no-list'}:${year ? String(year) : 'no-year'}`;
-    if (!this.#memoizedDataWrappers[memoKey]) {
-      counts++;
-      this.#memoizedDataWrappers[memoKey] = this.#dataWrapper.newCalve({listId, year})
-    }
-    console.log(counts)
-    return this.#memoizedDataWrappers[memoKey];
+  setMemoizedDataWrapper(options: DataWrapperOptions2, dataWrapper: DataWrapper) {
+    this.#memoizedDataWrappers[getMemoKey(options)] = dataWrapper;
   }
 }

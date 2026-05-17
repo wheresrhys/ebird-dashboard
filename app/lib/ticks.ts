@@ -158,6 +158,7 @@ export class TickWrapper {
   }
 
   get ticksByYear(): Record<number, TickWrapper> {
+    console.log(this.#dataWrapper)
     return Object.fromEntries(this.#dataWrapper.availableYears.map((year) => [year, this.getTicksForYear(year)]));
   }
 
