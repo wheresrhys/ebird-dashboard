@@ -3,7 +3,7 @@ import { filterData, getYearFilter, type EbirdDataFilter } from './data-filters'
 import { tickableSubspecies } from '@/app/lib/sanitise-data';
 import { TickWrapper, type TickSortType} from './ticks';
 import { listConfigMap } from '../models/lists';
-import {DataMemoizer} from './data-memoizer';
+import {SimpleCache} from './simple-cache';
 
 type DataWrapperOptions = {
   availableYears?: number[],
@@ -48,17 +48,23 @@ export class DataWrapper {
   #species?: Species[]
   #availableYears?: number[]
   #allTimeData?: DataWrapper
-  #memoizer: DataMemoizer;
+  #cache: SimpleCache<DataWrapper, DataWrapperOptions2>;
   #options: DataWrapperOptions2;
   constructor(
     sourceData: EbirdDataRow[],
     filters: EbirdDataFilter[] = [],
     {availableYears, allTimeData}: DataWrapperOptions = {},
     options?: DataWrapperOptions2,
-    memoizer?: DataMemoizer
+    cache?: SimpleCache<DataWrapper, DataWrapperOptions2>
   ) {
     this.#data = filterData(sourceData, filters)
-    this.#memoizer = memoizer ?? new DataMemoizer();
+    this.#cache = cache ?? new SimpleCache<DataWrapper, DataWrapperOptions2>(
+      ({
+        listId,
+        year
+      }: DataWrapperOptions2) => `${listId ?? 'no-list'}:${year ? String(year) : 'no-year'}`
+
+);
     if (availableYears) {
       this.#availableYears = availableYears
     }
@@ -105,7 +111,7 @@ export class DataWrapper {
   memoizedCalve(options: DataWrapperOptions2) {
     const { listId, year } = options;
     const memoOptions = { ...this.#options, ...options }
-    if (!this.#memoizer.getMemoizedDataWrapper(memoOptions)) {
+    if (!this.#cache.getItem(memoOptions)) {
       const filters = [];
       if (year) {
         filters.push(getYearFilter(year))
@@ -122,11 +128,11 @@ export class DataWrapper {
           availableYears: year ? [year] : this.availableYears
         },
         options,
-        this.#memoizer
+        this.#cache
       );
-      this.#memoizer.setMemoizedDataWrapper(memoOptions, calvedWrapper)
+      this.#cache.setItem(memoOptions, calvedWrapper)
     }
-    return this.#memoizer.getMemoizedDataWrapper(memoOptions);
+    return this.#cache.getItem(memoOptions);
   }
 
   calveForList(listId: string) {
