@@ -1,6 +1,7 @@
 import { EbirdDataRow, Species, ScientificName } from "../models/types";
-import { type DataWrapper } from './data-wrapper';
+import { type DataWrapper, DataWrapperOptions2 } from './data-wrapper';
 import { Temporal } from 'temporal-polyfill';
+import { SimpleCache } from "./simple-cache";
 
 const FIRST_PROPER_EBIRD_YEAR = 2021;
 
@@ -109,6 +110,11 @@ export function buildTickTally(tickWrapper: TickWrapper, terminateToday: boolean
   })
 }
 
+type TickWrapperOptions = {
+  orderedBy: TickSortType,
+  direction: 'asc' | 'desc'
+}
+
 export class TickWrapper {
   #dataWrapper: DataWrapper
   #orderedBy: TickSortType
@@ -158,7 +164,6 @@ export class TickWrapper {
   }
 
   get ticksByYear(): Record<number, TickWrapper> {
-    console.log(this.#dataWrapper)
     return Object.fromEntries(this.#dataWrapper.availableYears.map((year) => [year, this.getTicksForYear(year)]));
   }
 
@@ -273,6 +278,23 @@ export class TickWrapper {
     });
     return { recordYear, recordYearTicks }
   }
+
+
+  static construct(dataWrapper: DataWrapper, orderedBy: TickSortType, direction: 'asc' | 'desc') {
+    const cacheOptions = { ...dataWrapper.options, orderedBy, direction }
+    if (!TickWrapper.cache.getItem(cacheOptions)) {
+      TickWrapper.cache.setItem(cacheOptions, new TickWrapper(dataWrapper, orderedBy, direction))
+    }
+    return TickWrapper.cache.getItem(cacheOptions)
+  }
+
+  static cache = new SimpleCache<TickWrapper, TickWrapperOptions>(
+    ({
+      listId,
+      year,
+      orderedBy,
+      direction
+    }: DataWrapperOptions2 & TickWrapperOptions) => `${listId ?? 'no-list'}:${year ? String(year) : 'no-year'}:${orderedBy}:${direction}`);
 }
 
 

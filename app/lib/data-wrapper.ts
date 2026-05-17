@@ -90,9 +90,12 @@ export class DataWrapper {
     return Object.fromEntries(this.availableYears.map(year => [year, this.getDataForYear(year)]))
   }
 
-  // todo - memoise this
+  get options() {
+    return this.#options;
+  }
+
   getTicks(orderedBy: TickSortType, direction: 'asc' | 'desc' = 'asc'): TickWrapper {
-    return new TickWrapper(this, orderedBy, direction)
+    return TickWrapper.construct(this, orderedBy, direction)
   }
 
   calve(filters: EbirdDataFilter[], options: DataWrapperOptions = {}) {
@@ -118,7 +121,7 @@ export class DataWrapper {
           allTimeData: year ? this : null,
           availableYears: year ? [year] : this.availableYears
         },
-        options
+        memoOptions
       );
       DataWrapper.cache.setItem(memoOptions, calvedWrapper)
     }
