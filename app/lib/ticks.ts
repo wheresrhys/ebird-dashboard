@@ -121,7 +121,6 @@ export class TickWrapper {
   #direction: 'asc' | 'desc'
   #ticks?: Tick[]
   #allTimeTicks?: TickWrapper
-  #ticksByYear: Record<number, TickWrapper> = {}
   #averageBasedPredictions: number[] = []
   #detailBasedPredictions: number[] = []
   #speciesFrequencies?: Record<ScientificName, number>
@@ -157,10 +156,7 @@ export class TickWrapper {
   }
 
   getTicksForYear(year: number) {
-    if (!this.#ticksByYear[year]) {
-      this.#ticksByYear[year] = this.#dataWrapper.dataByYear[year].getTicks(this.#orderedBy, this.#direction)
-    }
-    return this.#ticksByYear[year]
+    return this.#dataWrapper.getDataForYear(year).getTicks(this.#orderedBy, this.#direction)
   }
 
   get ticksByYear(): Record<number, TickWrapper> {
