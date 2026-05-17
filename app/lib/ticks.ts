@@ -191,10 +191,10 @@ export class TickWrapper {
     if (!this.#detailBasedPredictions[dayOfYear - 1]) {
       const thisYearTicks = this.ticksByYear[new Date().getFullYear()];
       const thisYearScientificNames = thisYearTicks.ticks.map(tick => tick.scientificName)
-      const futureTicksByYear = this.#dataWrapper.calve([row => {
+      const futureTicksByYear = this.#dataWrapper.filter(row => {
         const rowDayOfYear = Temporal.PlainDate.from(row.date.toISOString().split('T')[0]).dayOfYear;
         return rowDayOfYear > (dayOfYear - 14) && !thisYearScientificNames.includes(row.scientificName)
-      }]).getTicks('firstSeen').ticksFromComparableYears;
+      }).getTicks('firstSeen').ticksFromComparableYears;
 
       const numberOfComparatorYears = Object.keys(futureTicksByYear).length;
       const allComparableTicks = Object.values(futureTicksByYear).flatMap(wrapper => wrapper.ticks)
