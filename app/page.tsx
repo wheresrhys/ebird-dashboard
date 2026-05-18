@@ -57,7 +57,7 @@ function TickList({ ticks, itemNumbersDescend}: { ticks: TickWrapper, itemNumber
 
 
 function RegionStats({ name, id, data, onSelect, isSelected }: { name: string, id: string, data: DataWrapper, onSelect: (id: string) => void, isSelected: boolean }) {
-  const filteredData = data.calveForList(id);
+  const filteredData = data.getDataForList(id);
   const ticksWrapper = filteredData.getTicks('firstSeen');
   const thisYearTicks = ticksWrapper.getTicksForYear(new Date().getFullYear());
   const { recordYear, recordYearTicks } = ticksWrapper.recordTicksAndYear;
@@ -76,7 +76,7 @@ function RegionStats({ name, id, data, onSelect, isSelected }: { name: string, i
 }
 
 function RegionDashboard({ allData, listId }: { allData: DataWrapper, listId: string }) {
-  const allTimeData = allData.calveForList(listId)
+  const allTimeData = allData.getDataForList(listId)
   const thisYear = new Date().getFullYear();
   const thisYearData = allTimeData.getDataForYear(thisYear)
   const allTimeTicks = allTimeData.getTicks('firstSeen', 'desc');

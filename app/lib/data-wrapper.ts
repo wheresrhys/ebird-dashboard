@@ -124,7 +124,7 @@ export class DataWrapper {
     return DataWrapper.cache.getItem(memoOptions);
   }
 
-  calveForList(listId: string) {
+  getDataForList(listId: string) {
     return this.calve({ listId });
   }
 

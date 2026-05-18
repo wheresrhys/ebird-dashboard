@@ -136,6 +136,7 @@ export class TickWrapper {
   #orderedBy: TickSortType
   #direction: 'asc' | 'desc'
   #ticks?: Tick[]
+  #tickCount?: number
   #averageBasedPredictions: number[] = []
   #detailBasedPredictions: number[] = []
   #speciesFrequencies?: Record<ScientificName, number>
@@ -161,6 +162,13 @@ export class TickWrapper {
         }).sort(getTickSorter(this.#orderedBy, this.#direction === 'desc'))
     }
     return this.#ticks
+  }
+
+  get tickCount() {
+    if (!this.#tickCount) {
+      this.#tickCount = this.#dataWrapper.species.length
+    }
+    return this.#tickCount
   }
 
   get allTimeTicks(): TickWrapper {
@@ -284,9 +292,9 @@ export class TickWrapper {
     let recordYear, recordYearTicks = 0;
     Object.entries(this.ticksByYear).forEach(([year, tickWrapper]) => {
       // we go with >= because if it's a tie, then show the most recent
-      if (tickWrapper.ticks.length >= recordYearTicks) {
+      if (tickWrapper.tickCount >= recordYearTicks) {
         recordYear = year
-        recordYearTicks = tickWrapper.ticks.length;
+        recordYearTicks = tickWrapper.tickCount;
       }
     });
     return { recordYear, recordYearTicks }
