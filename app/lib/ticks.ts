@@ -23,10 +23,9 @@ export type TickSortType = 'taxonomicOrder' | 'firstSeen' | 'lastSeen';
 
 const tickSorters: Record<TickSortType, (t1: Tick, t2: Tick) => number> = {
   taxonomicOrder: (t1: Tick, t2: Tick) => t1.taxonomicOrder - t2.taxonomicOrder,
-  firstSeen: (t1: Tick, t2: Tick) => t1.salientRecord.date.since(t2.salientRecord.date).sign,
-  lastSeen: (t1: Tick, t2: Tick) => t2.salientRecord.date.since(t1.salientRecord.date).sign,
+  firstSeen: (t1: Tick, t2: Tick) => Temporal.PlainDate.compare(t1.salientRecord.date, t2.salientRecord.date),
+  lastSeen: (t1: Tick, t2: Tick) => -Temporal.PlainDate.compare(t1.salientRecord.date, t2.salientRecord.date),
 }
-
 
 export const RARITY_CLASSIFICATIONS: Record<RarityLabel, RarityConfig> = {
   "Oh Wow x3": {
@@ -75,7 +74,7 @@ function getTickSorter(property: TickSortType, isReversed: boolean = false): (a:
 }
 
 function getToday () {
-  return Temporal.PlainDate.from(new Date().toISOString().split('T')[0]).dayOfYear
+  return Temporal.PlainDate.from(Temporal.Now.plainDateISO()).dayOfYear
 }
 
 function listComparableYears (): number[] {
@@ -94,16 +93,33 @@ export function excludeNonComparableYears<T>(dataByYear: Record<number, T>): Rec
   return Object.fromEntries(Object.entries(dataByYear).filter(([year]) => comparableYears.includes(Number(year))));
 }
 
+//todo memoize
 export function buildTickTally(tickWrapper: TickWrapper, terminateToday: boolean = false): number[] {
   const tickTimings = tickWrapper.ticks.map(tick =>
     tick.salientRecord.date.dayOfYear)
   let lastDate = 365;
   if (terminateToday) {
-    lastDate = Temporal.PlainDate.from(new Date().toISOString().split('T')[0]).dayOfYear
+    lastDate = getToday()
   }
+
+  let ticksSoFar = 0;
+
+  // TDOD why doesn't this work for the line chart???
+  // let tickIterator = 0;
+
+  // const tickies = [...Array(lastDate)]
+  //   .map((_, index) => {
+  //     while (tickTimings[tickIterator] === index + 1) {
+  //       tickIterator++;
+  //       ticksSoFar++;
+  //     }
+  //     return ticksSoFar
+  //   });
+
+  // return tickies;
   const ticksPerDay = [...Array(lastDate)].map((_, index) =>
     tickTimings.filter(timing => timing === index + 1).length);
-  let ticksSoFar = 0
+
   return ticksPerDay.map(ticks => {
     ticksSoFar += ticks;
     return ticksSoFar;
@@ -175,7 +191,7 @@ export class TickWrapper {
 
   getPredictionBasedOnAverage(dayOfYear: number = getToday()) {
     if (!this.#averageBasedPredictions[dayOfYear - 1]) {
-      const thisYearTicks = this.ticksByYear[new Date().getFullYear()];
+      const thisYearTicks = this.getTicksForYear(new Date().getFullYear());
       const averageForThisDate = this.averageTickTally[dayOfYear - 1];
       const averageAtYearEnd = this.averageTickTally[364]
       this.#averageBasedPredictions[dayOfYear - 1] = Math.round(averageAtYearEnd + thisYearTicks.ticks.length - averageForThisDate);
@@ -185,8 +201,13 @@ export class TickWrapper {
 
   getPredictionBasedOnDetail(dayOfYear: number = getToday()) {
     if (!this.#detailBasedPredictions[dayOfYear - 1]) {
-      const thisYearTicks = this.ticksByYear[new Date().getFullYear()];
+      const thisYearTicks = this.getTicksForYear(new Date().getFullYear());
       const thisYearScientificNames = thisYearTicks.ticks.map(tick => tick.scientificName)
+      // is this the most efficient way of getting this?
+      // coul do ticks('lastSeen') first as it's more cachable, and then filter that?
+      // woudl entail storing dayOfYear on ticks first
+      // or could apply filter first... hmm coudl all filtered sets initialise their own cache?
+      // ... if this.isFiltered this.cache = blah
       const futureTicksByYear = this.#dataWrapper.filter(row => {
         const rowDayOfYear = row.date.dayOfYear;
         return rowDayOfYear > (dayOfYear - 14) && !thisYearScientificNames.includes(row.scientificName)

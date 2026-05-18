@@ -79,8 +79,7 @@ function RegionDashboard({ allData, listId }: { allData: DataWrapper, listId: st
   const allTimeData = allData.calveForList(listId)
   const thisYear = new Date().getFullYear();
   const thisYearData = allTimeData.getDataForYear(thisYear)
-  const allTimeTicks = allTimeData.getTicks('firstSeen');
-
+  const allTimeTicks = allTimeData.getTicks('firstSeen', 'desc');
   return <div>
     <YearsLineChart ticks={allTimeTicks} />
     <RarityBucketsChart ticks={allTimeTicks} />
@@ -101,12 +100,9 @@ function RegionDashboard({ allData, listId }: { allData: DataWrapper, listId: st
 export default function Home() {
   const [data, setData]: [EbirdDataServerRow[], (data: EbirdDataServerRow[]) => void] = useState<EbirdDataServerRow[]>([])
   const [activeList, setActiveList] = useState(listConfigs[0].id)
-  console.log('wrappe')
   const allTimeData = wrapServerData(data);
-  console.log('wrapped')
   useEffect(() => {
     getAllData().then(result => {
-      console.log(result.length)
       setData(result as EbirdDataServerRow[])
     })
   }, [])

@@ -30,7 +30,7 @@ const DAY_LABELS = [...Array(365)].map((_, i) => String(i + 1));
 
 export default function YearsLineChart({ ticks }: { ticks: TickWrapper }) {
   const thisYear = new Date().getFullYear();
-  const thisYearTicks = buildTickTally(ticks.ticksByYear[thisYear], true);
+  const thisYearTicks = buildTickTally(ticks.getTicksForYear(thisYear), true);
   const otherYearTicks: [string, number[]][] =
     Object.entries(ticks.ticksFromComparableYears).map(([year, yTicks]) => [
       year,

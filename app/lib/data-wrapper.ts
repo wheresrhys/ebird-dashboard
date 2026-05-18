@@ -31,9 +31,6 @@ function getSpecies(rawData: EbirdDataRow[]): Species[] {
   });
 
   const species = Object.values(speciesMap);
-  species.forEach(sp => {
-    sp.records = sp.records.sort((a, b) => a.date.since(b.date).sign)
-  })
   return species;
 }
 
@@ -146,5 +143,7 @@ export function wrapServerData(sourceData: EbirdDataServerRow[]) {
       ...row,
       date: new Temporal.PlainDate(...row.date.split('-'))
     }
-  )))
+  ))
+  // TODO sort on server
+  .sort((a, b) => Temporal.PlainDate.compare(a.date, b.date)))
 }
