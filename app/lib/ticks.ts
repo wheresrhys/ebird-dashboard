@@ -2,8 +2,7 @@ import { EbirdDataRow, Species, ScientificName } from "../models/types";
 import { type DataWrapper, DataWrapperOptions } from './data-wrapper';
 import { Temporal } from 'temporal-polyfill';
 import { SimpleCache } from "./simple-cache";
-
-const FIRST_PROPER_EBIRD_YEAR = 2021;
+import { PAST_YEARS } from "./data-filters";
 
 export type Tick = Omit<Species, 'records'> & {
   salientRecord: EbirdDataRow;
@@ -75,22 +74,6 @@ function getTickSorter(property: TickSortType, isReversed: boolean = false): (a:
 
 function getToday () {
   return Temporal.PlainDate.from(Temporal.Now.plainDateISO()).dayOfYear
-}
-
-function listComparableYears (): number[] {
-  const years = [];
-  const thisYear = new Date().getFullYear();
-  let year = FIRST_PROPER_EBIRD_YEAR
-  while (year < thisYear) {
-    years.push(year);
-    year++;
-  }
-  return years;
-}
-
-export function excludeNonComparableYears<T>(dataByYear: Record<number, T>): Record<number, T> {
-  const comparableYears = listComparableYears();
-  return Object.fromEntries(Object.entries(dataByYear).filter(([year]) => comparableYears.includes(Number(year))));
 }
 
 //todo memoize
@@ -180,15 +163,11 @@ export class TickWrapper {
   }
 
   get ticksByYear(): Record<number, TickWrapper> {
-    return Object.fromEntries(this.#dataWrapper.availableYears.map((year) => [year, this.getTicksForYear(year)]));
+    return Object.fromEntries(PAST_YEARS.map((year) => [year, this.getTicksForYear(year)]));
   }
 
   get ticksFromComparableYears(): Record<number, TickWrapper> {
-    return excludeNonComparableYears(this.ticksByYear)
-  }
-
-  get comparableYears(): number[] {
-    return Object.keys(this.ticksFromComparableYears).map(key => parseInt(key, 10))
+    return Object.fromEntries(PAST_YEARS.map(year => ([year, this.ticksByYear[year]])))
   }
 
   get averageTickTally(): number[] {
@@ -216,13 +195,20 @@ export class TickWrapper {
       // woudl entail storing dayOfYear on ticks first
       // or could apply filter first... hmm coudl all filtered sets initialise their own cache?
       // ... if this.isFiltered this.cache = blah
+
+
       const futureTicksByYear = this.#dataWrapper.filter(row => {
         const rowDayOfYear = row.date.dayOfYear;
         return rowDayOfYear > (dayOfYear - 14) && !thisYearScientificNames.includes(row.scientificName)
       }).getTicks('firstSeen').ticksFromComparableYears;
-
-      const numberOfComparatorYears = Object.keys(futureTicksByYear).length;
       const allComparableTicks = Object.values(futureTicksByYear).flatMap(wrapper => wrapper.ticks)
+
+      // const allComparableTicks = Object.entries(this.#dataWrapper.getTicks('lastSeen').ticksFromComparableYears).flatMap(([year, tickWrapper]) => {
+      //   const ticks = tickWrapper.ticks.filter(tick => tick.salientRecord.date.dayOfYear > (dayOfYear - 14) && !thisYearScientificNames.includes(tick.scientificName))
+      //   return ticks;
+      // })
+
+      const numberOfComparatorYears = Object.keys(PAST_YEARS).length;
       const comparableTickTallies: Record<ScientificName, number> = {};
       allComparableTicks.forEach(({  scientificName }) => {
         if (comparableTickTallies[scientificName]) {
@@ -266,7 +252,7 @@ export class TickWrapper {
   get ticksWithRarity (): TickWithRarity[] {
     if (!this.#ticksWithRarity) {
       const speciesFrequencies = this.allTimeTicks.speciesFrequencies;
-      const numberOfComparableYears = listComparableYears().length;
+      const numberOfComparableYears = PAST_YEARS.length;
       const rarityLabels = getRarityLabels(numberOfComparableYears);
       this.#ticksWithRarity = this.ticks.map(tick => ({
           ...tick,
@@ -303,7 +289,7 @@ export class TickWrapper {
 
   static construct(dataWrapper: DataWrapper, orderedBy: TickSortType, direction: 'asc' | 'desc') {
     const cacheOptions = { ...dataWrapper.options, orderedBy, direction }
-    if (!TickWrapper.cache.getItem(cacheOptions)) {
+    if (!TickWrapper.cache.hasItem(cacheOptions)) {
       TickWrapper.cache.setItem(cacheOptions, new TickWrapper(dataWrapper, orderedBy, direction))
     }
     return TickWrapper.cache.getItem(cacheOptions)
