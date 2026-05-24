@@ -78,6 +78,10 @@ export class DataWrapper {
     return this.#options;
   }
 
+  hasData() {
+    return Boolean(this.#data.length)
+  }
+
   getTicks(orderedBy: TickSortType, direction: 'asc' | 'desc' = 'asc'): TickWrapper {
     return TickWrapper.construct(this, orderedBy, direction)
   }

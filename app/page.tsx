@@ -60,7 +60,7 @@ function TickList({ ticks, itemNumbersDescend}: { ticks: TickWrapper, itemNumber
 }
 
 
-function RegionStats({ name, id, data, onSelect, isSelected }: { name: string, id: string, data: DataWrapper, onSelect: (id: string) => void, isSelected: boolean }) {
+function RegionStats({ data, id }: { id: string, data: DataWrapper }) {
   const filteredData = data.getDataForList(id);
   const ticksWrapper = filteredData.getTicks('firstSeen');
   const { recordYear, recordYearTicks } = ticksWrapper.recordTicksAndYear;
@@ -70,10 +70,6 @@ function RegionStats({ name, id, data, onSelect, isSelected }: { name: string, i
   const [averageBasedPrediction, setAverageBasedPrediction] = useState<number | null>(null)
   const [detailBasedPrediction, setDetailBasedPrediction] = useState<number | null>(null)
 
-
-
-
-
   useEffect(() => {
     setAverageYearlyTally(Math.round(ticksWrapper.averageTickTally[364]));
     setAverageBasedPrediction(ticksWrapper.getPredictionBasedOnAverage());
@@ -81,11 +77,20 @@ function RegionStats({ name, id, data, onSelect, isSelected }: { name: string, i
   }, [ticksWrapper])
 
   return (
-    <div className={`stat ${isSelected ? 'bg-gray-100' : ''} cursor-pointer flex-1 min-w-0`} onClick={() => onSelect(id)}>
-      <div className="stat-desc">{name}</div>
+    <>
       <div className="stat-value">{ticksWrapper.ticks.length}</div>
       <div className="stat-title">{recordYearTicks} in {recordYear} {averageYearlyTally    ?<span className="text-gray-400">({averageYearlyTally})</span>: null}</div>
       <div className="stat-title">{thisYearTicks.ticks.length} {(averageBasedPrediction && detailBasedPrediction) ? <span className="text-gray-400">({averageBasedPrediction} | {detailBasedPrediction})</span> : null}</div>
+    </>
+  )
+}
+
+
+function RegionStatsWrapper({ name, id, data, onSelect, isSelected }: { name: string, id: string, data: DataWrapper, onSelect: (id: string) => void, isSelected: boolean }) {
+    return (
+    <div className={`stat ${isSelected ? 'bg-gray-100' : ''} cursor-pointer flex-1 min-w-0`} onClick={() => onSelect(id)}>
+      <div className="stat-desc">{name}</div>
+      {data.hasData() ? <RegionStats data={data} id={id}/> : null}
     </div>
   )
 }
@@ -126,7 +131,7 @@ export default function Home() {
   return (
     <div>
       <h1>ebird dashboard</h1>
-      {data.length > 0 ? <><div className="w-full ">
+      <><div className="w-full ">
         <div className="join stats stats-border shadow-none flex">
           <div className="stat w-50">
             <div className="stat-desc">Region</div>
@@ -134,15 +139,14 @@ export default function Home() {
             <div className="stat-title">Year record <span className="text-gray-400">(avg)</span></div>
             <div className="stat-title">This year <span className="text-gray-400">(predicted)</span></div>
           </div>
-          {listConfigs.map(config => <RegionStats key={config.id} {...config} data={allTimeData} onSelect={setActiveList} isSelected={config.id === activeList}/>)}
+          {listConfigs.map(config => <RegionStatsWrapper key={config.id} {...config} data={allTimeData} onSelect={setActiveList} isSelected={config.id === activeList}/>)}
 
 
         </div>
       </div>
 
-
-        <RegionDashboard allData={allTimeData} listId={activeList} />
-        </> : null}
+        {data.length > 0 ? <RegionDashboard allData={allTimeData} listId={activeList} />: null}
+        </>
     </div>
   );
 }
