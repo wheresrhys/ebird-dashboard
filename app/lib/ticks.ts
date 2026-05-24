@@ -2,8 +2,7 @@ import { EbirdDataRow, Species, ScientificName } from "../models/types";
 import { type DataWrapper, DataWrapperOptions } from './data-wrapper';
 import { Temporal } from 'temporal-polyfill';
 import { SimpleCache } from "./simple-cache";
-
-const FIRST_PROPER_EBIRD_YEAR = 2021;
+import { PAST_YEARS } from "./data-filters";
 
 export type Tick = Omit<Species, 'records'> & {
   salientRecord: EbirdDataRow;
@@ -21,12 +20,11 @@ export type TickWithRarity = Tick & {
 
 export type TickSortType = 'taxonomicOrder' | 'firstSeen' | 'lastSeen';
 
-const tickSortValueGetters: Record<TickSortType, (tick: Tick) => number> = {
-  taxonomicOrder: (tick: Tick) => tick.taxonomicOrder as number,
-  firstSeen: (tick: Tick) => tick.salientRecord?.date.getTime() as number,
-  lastSeen: (tick: Tick) => -(tick.salientRecord?.date.getTime() as number),
+const tickSorters: Record<TickSortType, (t1: Tick, t2: Tick) => number> = {
+  taxonomicOrder: (t1: Tick, t2: Tick) => t1.taxonomicOrder - t2.taxonomicOrder,
+  firstSeen: (t1: Tick, t2: Tick) => Temporal.PlainDate.compare(t1.salientRecord.date, t2.salientRecord.date),
+  lastSeen: (t1: Tick, t2: Tick) => -Temporal.PlainDate.compare(t1.salientRecord.date, t2.salientRecord.date),
 }
-
 
 export const RARITY_CLASSIFICATIONS: Record<RarityLabel, RarityConfig> = {
   "Oh Wow x3": {
@@ -70,40 +68,41 @@ export function getRarityLabels(yearCount: number): string[] {
 }
 
 function getTickSorter(property: TickSortType, isReversed: boolean = false): (a: Tick, b: Tick) => number {
-  const valueGetter = tickSortValueGetters[property];
-  return (a, b) => (valueGetter(a) - valueGetter(b)) * (isReversed ? -1 : 1);
+  const sorter = tickSorters[property];
+  return (a, b) => sorter(a, b) * (isReversed ? -1 : 1);
 }
 
 function getToday () {
-  return Temporal.PlainDate.from(new Date().toISOString().split('T')[0]).dayOfYear
+  return Temporal.PlainDate.from(Temporal.Now.plainDateISO()).dayOfYear
 }
 
-function listComparableYears (): number[] {
-  const years = [];
-  const thisYear = new Date().getFullYear();
-  let year = FIRST_PROPER_EBIRD_YEAR
-  while (year < thisYear) {
-    years.push(year);
-    year++;
-  }
-  return years;
-}
-
-export function excludeNonComparableYears<T>(dataByYear: Record<number, T>): Record<number, T> {
-  const comparableYears = listComparableYears();
-  return Object.fromEntries(Object.entries(dataByYear).filter(([year]) => comparableYears.includes(Number(year))));
-}
-
+//todo memoize
 export function buildTickTally(tickWrapper: TickWrapper, terminateToday: boolean = false): number[] {
   const tickTimings = tickWrapper.ticks.map(tick =>
-    Temporal.PlainDate.from(tick.salientRecord.date.toISOString().split('T')[0]).dayOfYear)
+    tick.salientRecord.date.dayOfYear)
   let lastDate = 365;
   if (terminateToday) {
-    lastDate = Temporal.PlainDate.from(new Date().toISOString().split('T')[0]).dayOfYear
+    lastDate = getToday()
   }
+
+  let ticksSoFar = 0;
+
+  // TDOD why doesn't this work for the line chart???
+  // let tickIterator = 0;
+
+  // const tickies = [...Array(lastDate)]
+  //   .map((_, index) => {
+  //     while (tickTimings[tickIterator] === index + 1) {
+  //       tickIterator++;
+  //       ticksSoFar++;
+  //     }
+  //     return ticksSoFar
+  //   });
+
+  // return tickies;
   const ticksPerDay = [...Array(lastDate)].map((_, index) =>
     tickTimings.filter(timing => timing === index + 1).length);
-  let ticksSoFar = 0
+
   return ticksPerDay.map(ticks => {
     ticksSoFar += ticks;
     return ticksSoFar;
@@ -120,6 +119,7 @@ export class TickWrapper {
   #orderedBy: TickSortType
   #direction: 'asc' | 'desc'
   #ticks?: Tick[]
+  #tickCount?: number
   #averageBasedPredictions: number[] = []
   #detailBasedPredictions: number[] = []
   #speciesFrequencies?: Record<ScientificName, number>
@@ -147,6 +147,13 @@ export class TickWrapper {
     return this.#ticks
   }
 
+  get tickCount() {
+    if (!this.#tickCount) {
+      this.#tickCount = this.#dataWrapper.species.length
+    }
+    return this.#tickCount
+  }
+
   get allTimeTicks(): TickWrapper {
     return this.#dataWrapper.allTimeData.getTicks(this.#orderedBy, this.#direction)
   }
@@ -156,15 +163,11 @@ export class TickWrapper {
   }
 
   get ticksByYear(): Record<number, TickWrapper> {
-    return Object.fromEntries(this.#dataWrapper.availableYears.map((year) => [year, this.getTicksForYear(year)]));
+    return Object.fromEntries(PAST_YEARS.map((year) => [year, this.getTicksForYear(year)]));
   }
 
   get ticksFromComparableYears(): Record<number, TickWrapper> {
-    return excludeNonComparableYears(this.ticksByYear)
-  }
-
-  get comparableYears(): number[] {
-    return Object.keys(this.ticksFromComparableYears).map(key => parseInt(key, 10))
+    return Object.fromEntries(PAST_YEARS.map(year => ([year, this.ticksByYear[year]])))
   }
 
   get averageTickTally(): number[] {
@@ -175,7 +178,7 @@ export class TickWrapper {
 
   getPredictionBasedOnAverage(dayOfYear: number = getToday()) {
     if (!this.#averageBasedPredictions[dayOfYear - 1]) {
-      const thisYearTicks = this.ticksByYear[new Date().getFullYear()];
+      const thisYearTicks = this.getTicksForYear(new Date().getFullYear());
       const averageForThisDate = this.averageTickTally[dayOfYear - 1];
       const averageAtYearEnd = this.averageTickTally[364]
       this.#averageBasedPredictions[dayOfYear - 1] = Math.round(averageAtYearEnd + thisYearTicks.ticks.length - averageForThisDate);
@@ -185,15 +188,27 @@ export class TickWrapper {
 
   getPredictionBasedOnDetail(dayOfYear: number = getToday()) {
     if (!this.#detailBasedPredictions[dayOfYear - 1]) {
-      const thisYearTicks = this.ticksByYear[new Date().getFullYear()];
+      const thisYearTicks = this.getTicksForYear(new Date().getFullYear());
       const thisYearScientificNames = thisYearTicks.ticks.map(tick => tick.scientificName)
+      // is this the most efficient way of getting this?
+      // coul do ticks('lastSeen') first as it's more cachable, and then filter that?
+      // woudl entail storing dayOfYear on ticks first
+      // or could apply filter first... hmm coudl all filtered sets initialise their own cache?
+      // ... if this.isFiltered this.cache = blah
+
+
       const futureTicksByYear = this.#dataWrapper.filter(row => {
-        const rowDayOfYear = Temporal.PlainDate.from(row.date.toISOString().split('T')[0]).dayOfYear;
+        const rowDayOfYear = row.date.dayOfYear;
         return rowDayOfYear > (dayOfYear - 14) && !thisYearScientificNames.includes(row.scientificName)
       }).getTicks('firstSeen').ticksFromComparableYears;
-
-      const numberOfComparatorYears = Object.keys(futureTicksByYear).length;
       const allComparableTicks = Object.values(futureTicksByYear).flatMap(wrapper => wrapper.ticks)
+
+      // const allComparableTicks = Object.entries(this.#dataWrapper.getTicks('lastSeen').ticksFromComparableYears).flatMap(([year, tickWrapper]) => {
+      //   const ticks = tickWrapper.ticks.filter(tick => tick.salientRecord.date.dayOfYear > (dayOfYear - 14) && !thisYearScientificNames.includes(tick.scientificName))
+      //   return ticks;
+      // })
+
+      const numberOfComparatorYears = Object.keys(PAST_YEARS).length;
       const comparableTickTallies: Record<ScientificName, number> = {};
       allComparableTicks.forEach(({  scientificName }) => {
         if (comparableTickTallies[scientificName]) {
@@ -237,7 +252,7 @@ export class TickWrapper {
   get ticksWithRarity (): TickWithRarity[] {
     if (!this.#ticksWithRarity) {
       const speciesFrequencies = this.allTimeTicks.speciesFrequencies;
-      const numberOfComparableYears = listComparableYears().length;
+      const numberOfComparableYears = PAST_YEARS.length;
       const rarityLabels = getRarityLabels(numberOfComparableYears);
       this.#ticksWithRarity = this.ticks.map(tick => ({
           ...tick,
@@ -263,9 +278,9 @@ export class TickWrapper {
     let recordYear, recordYearTicks = 0;
     Object.entries(this.ticksByYear).forEach(([year, tickWrapper]) => {
       // we go with >= because if it's a tie, then show the most recent
-      if (tickWrapper.ticks.length >= recordYearTicks) {
+      if (tickWrapper.tickCount >= recordYearTicks) {
         recordYear = year
-        recordYearTicks = tickWrapper.ticks.length;
+        recordYearTicks = tickWrapper.tickCount;
       }
     });
     return { recordYear, recordYearTicks }
@@ -274,7 +289,7 @@ export class TickWrapper {
 
   static construct(dataWrapper: DataWrapper, orderedBy: TickSortType, direction: 'asc' | 'desc') {
     const cacheOptions = { ...dataWrapper.options, orderedBy, direction }
-    if (!TickWrapper.cache.getItem(cacheOptions)) {
+    if (!TickWrapper.cache.hasItem(cacheOptions)) {
       TickWrapper.cache.setItem(cacheOptions, new TickWrapper(dataWrapper, orderedBy, direction))
     }
     return TickWrapper.cache.getItem(cacheOptions)

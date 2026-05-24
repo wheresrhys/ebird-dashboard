@@ -1,6 +1,7 @@
 'use client'
 
 /*
+- Handle leap year
 - squished bar chart (like a DNA result) showing a vertical line for every tick coloured by rarity
 - doughnut charts should be scaled according to the biggest year, so that the wedges mean the same number of birds in each chart. I want to be able to say 'in this year I saw more or less common birds than year x'
 - Maybe donut isn't the right paradigm, it shoudl be more like a horizontal stacked bar, and clicking a button allows them to be stacked as lines in chronological order - YES!!!
@@ -13,7 +14,6 @@
 - Put everything in promises and useEffect to mak erendering mroe incremental
 - Page showing all regions in detail for a year
  - quality ticks per year (per list) see https://docs.google.com/spreadsheets/d/1Zn7RP9e3mSVDGg0LZHWVO4q2gp1YxbGVQO1AZrLHUWE/edit?gid=713428706#gid=713428706
- - improve ticks by year to generate individually and popoulate an already extant object
  - matrix of lists totals
  - star birds
   - split ticks for year from ticks for all years classes. both extend a shared thing
@@ -22,21 +22,19 @@
  - Gardens and seymour road lists
  - search for/click on a species and get EVERYTHING on it
  - for each non-common species, plot which years it appears for
- - convert all dates to use temporal
- - store day of year on ticks
+
  - TODO - aggregate best ticks periods
   - when do I get most of my lifers
   - add lines to the rarity by date that
     - says when all life ticks are
     - another that just collects all the year dots on a single line (need to think about decluttering though)
-- stop accepting filters - not needed. then can make everything memoised by default on year and region combo
 - Also make stacked rarity charts available as proportion
 - chart comparing all lists for a year (or for all time) in a line
 */
 import { getAllData } from "./actions/load-csv";
-import type { EbirdDataRow } from "./models/types";
+import type { EbirdDataServerRow } from "./models/types";
 import {useEffect, useState} from 'react';
-import { wrapData, DataWrapper } from './lib/data-wrapper';
+import { wrapServerData, DataWrapper } from './lib/data-wrapper';
 import { RARITY_CLASSIFICATIONS, type TickWrapper} from './lib/ticks';
 import { listConfigs } from './models/lists';
 import YearsLineChart from './components/YearsLineChart'
@@ -48,7 +46,7 @@ function TickList({ ticks, itemNumbersDescend}: { ticks: TickWrapper, itemNumber
     <ol reversed={itemNumbersDescend ?? false} className="list-inside list-decimal">
       {ticks.ticksWithRarity.map(tick => (
         <li className={`mb-2 ${tick.isSubspecies ? 'text-italic' : ''}`} key={tick.scientificName}>
-          <span className={`w-4 h-4 inline-block ${RARITY_CLASSIFICATIONS[tick.rarityClassification].tailwindColour}`}></span>{tick.commonName} - {tick.salientRecord?.date.toLocaleDateString()} - {tick.salientRecord?.location} {tick.salientRecord.submissionId}
+          <span className={`w-4 h-4 inline-block ${RARITY_CLASSIFICATIONS[tick.rarityClassification].tailwindColour}`}></span>{tick.commonName} - {tick.salientRecord?.date.toString()} - {tick.salientRecord?.location} {tick.salientRecord.submissionId}
         </li>
       ))}
     </ol>
@@ -57,10 +55,9 @@ function TickList({ ticks, itemNumbersDescend}: { ticks: TickWrapper, itemNumber
 
 
 function RegionStats({ name, id, data, onSelect, isSelected }: { name: string, id: string, data: DataWrapper, onSelect: (id: string) => void, isSelected: boolean }) {
-  const filteredData = data.calveForList(id);
+  const filteredData = data.getDataForList(id);
   const ticksWrapper = filteredData.getTicks('firstSeen');
-  const ticksByYear = ticksWrapper.ticksByYear;
-  const thisYearTicks = ticksByYear[new Date().getFullYear()];
+  const thisYearTicks = ticksWrapper.getTicksForYear(new Date().getFullYear());
   const { recordYear, recordYearTicks } = ticksWrapper.recordTicksAndYear;
   const averageTickTally = ticksWrapper.averageTickTally;
   const averageBasedPrediction = ticksWrapper.getPredictionBasedOnAverage();
@@ -77,11 +74,10 @@ function RegionStats({ name, id, data, onSelect, isSelected }: { name: string, i
 }
 
 function RegionDashboard({ allData, listId }: { allData: DataWrapper, listId: string }) {
-  const allTimeData = allData.calveForList(listId)
+  const allTimeData = allData.getDataForList(listId)
   const thisYear = new Date().getFullYear();
   const thisYearData = allTimeData.getDataForYear(thisYear)
-  const allTimeTicks = allTimeData.getTicks('firstSeen');
-
+  const allTimeTicks = allTimeData.getTicks('firstSeen', 'desc');
   return <div>
     <YearsLineChart ticks={allTimeTicks} />
     <RarityBucketsChart ticks={allTimeTicks} />
@@ -100,12 +96,13 @@ function RegionDashboard({ allData, listId }: { allData: DataWrapper, listId: st
 
 
 export default function Home() {
-  const [data, setData]: [EbirdDataRow[], (data: EbirdDataRow[]) => void] = useState<EbirdDataRow[]>([])
+  const [data, setData]: [EbirdDataServerRow[], (data: EbirdDataServerRow[]) => void] = useState<EbirdDataServerRow[]>([])
   const [activeList, setActiveList] = useState(listConfigs[0].id)
-  const allTimeData = wrapData(data);
-
+  const allTimeData = wrapServerData(data);
   useEffect(() => {
-    getAllData().then(result => setData(result as EbirdDataRow[]))
+    getAllData().then(result => {
+      setData(result as EbirdDataServerRow[])
+    })
   }, [])
 
 
