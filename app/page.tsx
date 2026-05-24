@@ -81,7 +81,7 @@ function RegionStats({ name, id, data, onSelect, isSelected }: { name: string, i
   }, [ticksWrapper])
 
   return (
-    <div className={`stat ${isSelected ? 'bg-gray-100' : ''} cursor-pointer`} onClick={() => onSelect(id)}>
+    <div className={`stat ${isSelected ? 'bg-gray-100' : ''} cursor-pointer flex-1 min-w-0`} onClick={() => onSelect(id)}>
       <div className="stat-desc">{name}</div>
       <div className="stat-value">{ticksWrapper.ticks.length}</div>
       <div className="stat-title">{recordYearTicks} in {recordYear} {averageYearlyTally    ?<span className="text-gray-400">({averageYearlyTally})</span>: null}</div>
@@ -126,9 +126,9 @@ export default function Home() {
   return (
     <div>
       <h1>ebird dashboard</h1>
-      {data.length > 0 ? <><div className="w-full">
-        <div className="join stats stats-border shadow-none">
-          <div className="stat">
+      {data.length > 0 ? <><div className="w-full ">
+        <div className="join stats stats-border shadow-none flex">
+          <div className="stat w-50">
             <div className="stat-desc">Region</div>
             <div className="stat-value">All time</div>
             <div className="stat-title">Year record <span className="text-gray-400">(avg)</span></div>
