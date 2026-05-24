@@ -1,6 +1,12 @@
 'use client'
 
 /*
+- Perf: Loading order
+  - All time, year record and year so far for each list
+  - Years line chart
+  - Year and all time list
+  - predictions and averages for each list tile
+  - other charts
 - Handle leap year
 - squished bar chart (like a DNA result) showing a vertical line for every tick coloured by rarity
 - doughnut charts should be scaled according to the biggest year, so that the wedges mean the same number of birds in each chart. I want to be able to say 'in this year I saw more or less common birds than year x'
@@ -57,18 +63,29 @@ function TickList({ ticks, itemNumbersDescend}: { ticks: TickWrapper, itemNumber
 function RegionStats({ name, id, data, onSelect, isSelected }: { name: string, id: string, data: DataWrapper, onSelect: (id: string) => void, isSelected: boolean }) {
   const filteredData = data.getDataForList(id);
   const ticksWrapper = filteredData.getTicks('firstSeen');
-  const thisYearTicks = ticksWrapper.getTicksForYear(new Date().getFullYear());
   const { recordYear, recordYearTicks } = ticksWrapper.recordTicksAndYear;
-  const averageTickTally = ticksWrapper.averageTickTally;
-  const averageBasedPrediction = ticksWrapper.getPredictionBasedOnAverage();
-  const detailBasedPrediction = ticksWrapper.getPredictionBasedOnDetail();
+  const thisYearTicks = ticksWrapper.getTicksForYear(new Date().getFullYear());
+
+  const [averageYearlyTally, setAverageYearlyTally] = useState<number | null>(null);
+  const [averageBasedPrediction, setAverageBasedPrediction] = useState<number | null>(null)
+  const [detailBasedPrediction, setDetailBasedPrediction] = useState<number | null>(null)
+
+
+
+
+
+  useEffect(() => {
+    setAverageYearlyTally(Math.round(ticksWrapper.averageTickTally[364]));
+    setAverageBasedPrediction(ticksWrapper.getPredictionBasedOnAverage());
+    setDetailBasedPrediction(ticksWrapper.getPredictionBasedOnDetail());
+  }, [ticksWrapper])
 
   return (
     <div className={`stat ${isSelected ? 'bg-gray-100' : ''} cursor-pointer`} onClick={() => onSelect(id)}>
       <div className="stat-desc">{name}</div>
       <div className="stat-value">{ticksWrapper.ticks.length}</div>
-      <div className="stat-title">{recordYearTicks} in {recordYear} <span className="text-gray-400">({Math.round(averageTickTally[364])})</span></div>
-      <div className="stat-title">{thisYearTicks.ticks.length} <span className="text-gray-400">({averageBasedPrediction} | {detailBasedPrediction})</span></div>
+      <div className="stat-title">{recordYearTicks} in {recordYear} {averageYearlyTally    ?<span className="text-gray-400">({averageYearlyTally})</span>: null}</div>
+      <div className="stat-title">{thisYearTicks.ticks.length} {(averageBasedPrediction && detailBasedPrediction) ? <span className="text-gray-400">({averageBasedPrediction} | {detailBasedPrediction})</span> : null}</div>
     </div>
   )
 }
