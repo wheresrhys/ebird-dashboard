@@ -1,5 +1,5 @@
 import type { EbirdDataRow, EbirdDataServerRow, Species } from "../models/types";
-import { filterData, getYearFilter, type EbirdDataFilter } from './data-filters'
+import { filterData, getYearFilter, type EbirdDataFilter, PAST_YEARS, ALL_YEARS } from './data-filters'
 import { tickableSubspecies } from '@/app/lib/sanitise-data';
 import { TickWrapper, type TickSortType} from './ticks';
 import { listConfigMap } from '../models/lists';
@@ -7,7 +7,6 @@ import {SimpleCache} from './simple-cache';
 import { Temporal } from 'temporal-polyfill';
 
 type DataWrapperMeta = {
-  availableYears?: number[],
   allTimeData?: DataWrapper | null
 }
 
@@ -44,7 +43,6 @@ export type DataWrapperOptions = { listId?: string, year?: number};
 export class DataWrapper {
   #data: EbirdDataRow[]
   #species?: Species[]
-  #availableYears?: number[]
   #allTimeData?: DataWrapper
   #options: DataWrapperOptions;
   constructor(
@@ -52,9 +50,6 @@ export class DataWrapper {
     options: DataWrapperMeta & DataWrapperOptions = {},
   ) {
     this.#data = sourceData;
-    if (options.availableYears) {
-      this.#availableYears = options.availableYears
-    }
     if (options.allTimeData) {
       this.#allTimeData = options.allTimeData
     }
@@ -67,13 +62,6 @@ export class DataWrapper {
     return this.#species
   }
 
-  get availableYears() {
-    if (!this.#availableYears) {
-      this.#availableYears = listAvailableYears(this.#data)
-    }
-    return this.#availableYears
-  }
-
   get allTimeData(): DataWrapper {
     return this.#allTimeData || this
   }
@@ -83,7 +71,7 @@ export class DataWrapper {
   }
 
   get dataByYear() {
-    return Object.fromEntries(this.availableYears.map(year => [year, this.getDataForYear(year)]))
+    return Object.fromEntries(ALL_YEARS.map(year => [year, this.getDataForYear(year)]))
   }
 
   get options() {
@@ -102,7 +90,7 @@ export class DataWrapper {
     const { listId, year } = options;
     const memoOptions = { ...this.#options, ...options }
 
-    if (!DataWrapper.cache.getItem(memoOptions)) {
+    if (!DataWrapper.cache.hasItem(memoOptions)) {
       const filters = [];
       if (year) {
         filters.push(getYearFilter(year))
@@ -115,7 +103,6 @@ export class DataWrapper {
         filteredData,
         {
           allTimeData: year ? this : null,
-          availableYears: year ? [year] : this.availableYears,
           ...memoOptions
         },
       );
@@ -141,6 +128,7 @@ export function wrapServerData(sourceData: EbirdDataServerRow[]) {
   return new DataWrapper(sourceData.map(row => (
     {
       ...row,
+      //@ts-expect-error
       date: new Temporal.PlainDate(...row.date.split('-'))
     }
   ))

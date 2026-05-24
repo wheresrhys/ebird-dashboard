@@ -13,6 +13,7 @@ import {
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
 import { getRarityLabels, RARITY_CLASSIFICATIONS, type TickWrapper, RarityLabel  } from "../lib/ticks";
+import {PAST_YEARS} from '../lib/data-filters';
 
 
 ChartJS.register(
@@ -26,7 +27,7 @@ ChartJS.register(
 
 export default function RarityBucketsChart({ ticks }: { ticks: TickWrapper }) {
   const thisYear = new Date().getFullYear();
-  const rarityLabels = getRarityLabels(ticks.comparableYears.length)
+  const rarityLabels = getRarityLabels(PAST_YEARS.length)
   const barLabels = ['All time', ...Object.keys(ticks.ticksFromComparableYears), thisYear].map(String);
 
   rarityLabels.reverse();

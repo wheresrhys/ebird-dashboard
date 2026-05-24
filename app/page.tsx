@@ -2,7 +2,6 @@
 
 /*
 - Handle leap year
-- store day of year on ticks
 - squished bar chart (like a DNA result) showing a vertical line for every tick coloured by rarity
 - doughnut charts should be scaled according to the biggest year, so that the wedges mean the same number of birds in each chart. I want to be able to say 'in this year I saw more or less common birds than year x'
 - Maybe donut isn't the right paradigm, it shoudl be more like a horizontal stacked bar, and clicking a button allows them to be stacked as lines in chronological order - YES!!!
@@ -29,7 +28,6 @@
   - add lines to the rarity by date that
     - says when all life ticks are
     - another that just collects all the year dots on a single line (need to think about decluttering though)
-- stop accepting filters - not needed. then can make everything memoised by default on year and region combo
 - Also make stacked rarity charts available as proportion
 - chart comparing all lists for a year (or for all time) in a line
 */

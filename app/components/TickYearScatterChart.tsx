@@ -5,16 +5,17 @@ import {
   LineElement,
   Tooltip,
   Legend,
+  type ChartOptions,
 } from 'chart.js';
 import { Scatter } from 'react-chartjs-2';
 import { getRarityLabels, RARITY_CLASSIFICATIONS, type TickWrapper, TickWithRarity } from '../lib/ticks';
-import { Temporal } from 'temporal-polyfill';
+import { PAST_YEARS } from '../lib/data-filters';
 
 ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend);
 
 export default function TickYearScatterChart({ ticks }: { ticks: TickWrapper }) {
   const thisYear = new Date().getFullYear();
-  const rarityLabels = getRarityLabels(ticks.comparableYears.length)
+  const rarityLabels = getRarityLabels(PAST_YEARS.length)
   rarityLabels.reverse();
   const allTicksByYear: [string, TickWrapper][] = [
     ...Object.entries(ticks.ticksFromComparableYears),
@@ -58,8 +59,8 @@ export default function TickYearScatterChart({ ticks }: { ticks: TickWrapper }) 
         // mode: "index",
         intersect: false,
         callbacks: {
-          label: function ({raw}: {raw: {x: number, y: number, label: string}}) {
-            return raw.label
+          label: function (tooltipItem) {
+            return tooltipItem.label
           }
         }
       },
@@ -72,7 +73,7 @@ export default function TickYearScatterChart({ ticks }: { ticks: TickWrapper }) 
         ticks: {
           stepSize: 7,
           precision: 0,
-          callback: (value: number) => Math.floor(value / 7)
+          callback: (value: unknown) => Math.floor(Number(value) / 7)
         },
         grace: 0,
 
@@ -85,7 +86,7 @@ export default function TickYearScatterChart({ ticks }: { ticks: TickWrapper }) 
           stepSize: 1,        // tick every 1 unit
           precision: 0,       // no decimal places in labels
           // optional: hide any stray non-integer tick Chart.js might still build
-          callback: (value: number) =>
+          callback: (value: string | number) =>
             Number.isInteger(value) ? value : undefined,
         },
         grace: 0,             // v4: reduces extra padding that can add odd ticks
