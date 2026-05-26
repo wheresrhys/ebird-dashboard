@@ -1,6 +1,7 @@
 'use client'
 
 /*
+- Targets for next 4 weeks, for all regions
 - Perf: Loading order
   - All time, year record and year so far for each list
   - Years line chart
@@ -81,6 +82,7 @@ function RegionStats({ data, id }: { id: string, data: DataWrapper }) {
       <div className="stat-value">{ticksWrapper.ticks.length}</div>
       <div className="stat-title">{recordYearTicks} in {recordYear} {averageYearlyTally    ?<span className="text-gray-400">({averageYearlyTally})</span>: null}</div>
       <div className="stat-title">{thisYearTicks.ticks.length} {(averageBasedPrediction && detailBasedPrediction) ? <span className="text-gray-400">({averageBasedPrediction} | {detailBasedPrediction})</span> : null}</div>
+      <div className="stat-title">{ticksWrapper.ticks[ticksWrapper.ticks.length - 1].commonName}</div>
     </>
   )
 }
@@ -93,6 +95,22 @@ function RegionStatsWrapper({ name, id, data, onSelect, isSelected }: { name: st
       {data.hasData() ? <RegionStats data={data} id={id}/> : null}
     </div>
   )
+}
+
+
+function Lists({ allTimeData, activeList, onSelectList }: { allTimeData: DataWrapper, activeList: string, onSelectList: (id: string) => void }) {
+  return <div className="w-full ">
+    <div className="join stats stats-border shadow-none flex">
+      <div className="stat w-50">
+        <div className="stat-desc">Region</div>
+        <div className="stat-value">All time</div>
+        <div className="stat-title">Year record <span className="text-gray-400">(avg)</span></div>
+        <div className="stat-title">This year <span className="text-gray-400">(predicted)</span></div>
+        <div className="stat-title">Last tick</div>
+      </div>
+      {listConfigs.map(config => <RegionStatsWrapper key={config.id} {...config} data={allTimeData} onSelect={onSelectList} isSelected={config.id === activeList} />)}
+    </div>
+  </div>
 }
 
 function RegionDashboard({ allData, listId }: { allData: DataWrapper, listId: string }) {
@@ -131,19 +149,7 @@ export default function Home() {
   return (
     <div>
       <h1>ebird dashboard</h1>
-      <><div className="w-full ">
-        <div className="join stats stats-border shadow-none flex">
-          <div className="stat w-50">
-            <div className="stat-desc">Region</div>
-            <div className="stat-value">All time</div>
-            <div className="stat-title">Year record <span className="text-gray-400">(avg)</span></div>
-            <div className="stat-title">This year <span className="text-gray-400">(predicted)</span></div>
-          </div>
-          {listConfigs.map(config => <RegionStatsWrapper key={config.id} {...config} data={allTimeData} onSelect={setActiveList} isSelected={config.id === activeList}/>)}
-
-
-        </div>
-      </div>
+      <><Lists allTimeData={allTimeData} activeList={activeList} onSelectList={setActiveList}/>
 
         {data.length > 0 ? <RegionDashboard allData={allTimeData} listId={activeList} />: null}
         </>
